@@ -1,0 +1,15 @@
+# 가상환경
+venv/
+.env/
+
+#파이썬 캐시
+_pycache_/
+*.pyc
+
+#SQLite DB 파일
+*.db
+*.SQLite
+*.sqlite3
+
+#os 잡파일
+.DS_store
