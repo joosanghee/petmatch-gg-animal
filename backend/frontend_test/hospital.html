@@ -1,0 +1,170 @@
+<!-- 병원정보 -->
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 동물병원/약국</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none; color:inherit;">🐾 PetMatch</a>
+    </div>
+    <nav class="nav">
+      <a href="animals.html">유기동물</a>
+      <a href="#">보호소</a>
+      <a href="hospital.html">병원/약국</a>
+      <a class="btn ghost" href="#">로그인</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero" style="margin-bottom:16px;">
+      <h1 style="margin-bottom:8px;">동물병원 · 동물약국</h1>
+      <p style="margin-bottom:14px;">근처 병원/약국 연락처와 주소를 빠르게 확인하세요.</p>
+
+      <div class="searchbar">
+        <input placeholder="병원/약국 이름, 지역(시/구), 주소 키워드 검색" />
+        <button class="btn primary">검색</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip">병원</button>
+        <button class="chip">약국</button>
+        <button class="chip">수원</button>
+        <button class="chip">성남</button>
+        <button class="chip">용인</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <!-- 필터 -->
+      <aside class="filters">
+        <h2>필터</h2>
+
+        <label class="field">
+          <span>구분</span>
+          <select>
+            <option>전체</option>
+            <option>동물병원</option>
+            <option>동물약국</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>지역(시)</span>
+          <select>
+            <option>전체</option>
+            <option>수원시</option>
+            <option>성남시</option>
+            <option>용인시</option>
+            <option>고양시</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>지역(구/동)</span>
+          <select>
+            <option>전체</option>
+            <option>장안구</option>
+            <option>분당구</option>
+            <option>기흥구</option>
+          </select>
+        </label>
+
+        <button class="btn primary full" style="margin-top:6px;">적용</button>
+        <button class="btn ghost full" style="margin-top:8px;">초기화</button>
+
+        <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5;">
+          * 지금은 정적 화면 확인용이라 필터/검색이 실제로 동작하지 않아도 정상입니다.
+        </div>
+      </aside>
+
+      <!-- 결과 -->
+      <section class="results">
+        <div class="results-head">
+          <div>결과 <b>24</b>곳</div>
+          <select class="sort">
+            <option>가나다순</option>
+            <option>지역순</option>
+          </select>
+        </div>
+
+        <div class="grid">
+          <!-- 병원 카드 예시 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">행복동물병원</div>
+              <div class="meta">구분: 동물병원</div>
+              <div class="meta">☎ 031-123-4567</div>
+              <div class="meta">주소: 경기도 수원시 장안구 ○○로 12</div>
+              <div class="actions">
+                <a class="btn primary" href="hospital_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">분당24시동물의료센터</div>
+              <div class="meta">구분: 동물병원</div>
+              <div class="meta">☎ 031-222-3333</div>
+              <div class="meta">주소: 경기도 성남시 분당구 △△대로 88</div>
+              <div class="actions">
+                <a class="btn primary" href="hospital_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 약국 카드 예시 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">사랑동물약국</div>
+              <div class="meta">구분: 동물약국</div>
+              <div class="meta">☎ 031-444-5555</div>
+              <div class="meta">주소: 경기도 용인시 기흥구 □□로 101</div>
+              <div class="actions">
+                <a class="btn primary" href="hospital_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">덕양동물약국</div>
+              <div class="meta">구분: 동물약국</div>
+              <div class="meta">☎ 031-777-8888</div>
+              <div class="meta">주소: 경기도 고양시 덕양구 ☆☆길 3</div>
+              <div class="actions">
+                <a class="btn primary" href="hospital_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:14px;">
+          <button class="btn ghost">이전</button>
+          <button class="btn primary">1</button>
+          <button class="btn ghost">2</button>
+          <button class="btn ghost">다음</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© PetMatch</span>
+  </footer>
+</body>
+</html>

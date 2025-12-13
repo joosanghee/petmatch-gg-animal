@@ -1,0 +1,195 @@
+<!-- 목록 -->
+ <!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 유기동물 목록</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><a href="index.html" style="text-decoration:none; color:inherit;">🐾 PetMatch</a></div>
+    <nav class="nav">
+      <a href="animals.html">유기동물</a>
+      <a href="#">보호소</a>
+      <a href="hospital.html">병원/약국</a>
+
+      <a class="btn ghost" href="#">로그인</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- 상단 타이틀/검색 -->
+    <section class="hero" style="margin-bottom:16px;">
+      <h1 style="margin-bottom:8px;">유기동물 목록</h1>
+      <p style="margin-bottom:14px;">조건을 골라서 공고를 빠르게 찾아보세요.</p>
+
+      <div class="searchbar">
+        <input placeholder="품종, 지역, 키워드로 검색" />
+        <button class="btn primary">검색</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip">강아지</button>
+        <button class="chip">고양이</button>
+        <button class="chip">수컷</button>
+        <button class="chip">암컷</button>
+        <button class="chip">중성화 예</button>
+        <button class="chip">마감임박</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <!-- 필터 -->
+      <aside class="filters">
+        <h2>필터</h2>
+
+        <label class="field">
+          <span>지역</span>
+          <select>
+            <option>전체</option>
+            <option>수원</option>
+            <option>성남</option>
+            <option>용인</option>
+            <option>고양</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>동물종</span>
+          <select>
+            <option>전체</option>
+            <option>개</option>
+            <option>고양이</option>
+            <option>기타</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>성별</span>
+          <select>
+            <option>전체</option>
+            <option>수컷</option>
+            <option>암컷</option>
+            <option>미상</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>중성화</span>
+          <select>
+            <option>전체</option>
+            <option>예</option>
+            <option>아니오</option>
+            <option>미상</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>공고상태</span>
+          <select>
+            <option>전체</option>
+            <option>보호중</option>
+            <option>종료</option>
+          </select>
+        </label>
+
+        <button class="btn primary full" style="margin-top:6px;">적용</button>
+        <button class="btn ghost full" style="margin-top:8px;">초기화</button>
+
+        <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5;">
+          * 지금은 정적 화면 확인용이라 버튼들이 실제로 동작하진 않아도 정상입니다.
+        </div>
+      </aside>
+
+      <!-- 결과 -->
+      <section class="results">
+        <div class="results-head">
+          <div>결과 <b>128</b>건</div>
+          <select class="sort">
+            <option>최신순</option>
+            <option>마감임박순</option>
+            <option>체중 낮은순</option>
+          </select>
+        </div>
+
+        <div class="grid">
+          <!-- 카드 예시 1 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">믹스견 · 수컷 · 6.2kg</div>
+              <div class="meta">발견: 수원시 장안구 근처</div>
+              <div class="meta">공고: 2025-12-01 ~ 2025-12-15</div>
+              <div class="meta">보호소: OO보호소 · ☎ 031-xxx-xxxx</div>
+              <div class="actions">
+                <a class="btn primary" href="animal_detail.html">상세</a>
+                <button class="btn ghost">♡ 즐겨찾기</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 카드 예시 2 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">코리안숏헤어 · 암컷 · 3.4kg</div>
+              <div class="meta">발견: 성남시 분당구 주택가</div>
+              <div class="meta">공고: 2025-12-03 ~ 2025-12-17</div>
+              <div class="meta">보호소: △△보호소 · ☎ 031-xxx-xxxx</div>
+              <div class="actions">
+                <a class="btn primary" href="animal_detail.html">상세</a>
+                <button class="btn ghost">♡ 즐겨찾기</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 카드 예시 3 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">푸들 · 미상 · 4.1kg</div>
+              <div class="meta">발견: 용인시 처인구 도로변</div>
+              <div class="meta">공고: 2025-12-02 ~ 2025-12-14</div>
+              <div class="meta">보호소: □□보호소 · ☎ 031-xxx-xxxx</div>
+              <div class="actions">
+                <a class="btn primary" href="animal_detail.html">상세</a>
+                <button class="btn ghost">♡ 즐겨찾기</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 카드 예시 4 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">믹스묘 · 수컷 · 5.0kg</div>
+              <div class="meta">발견: 고양시 덕양구 공원</div>
+              <div class="meta">공고: 2025-12-05 ~ 2025-12-20</div>
+              <div class="meta">보호소: ☆☆보호소 · ☎ 031-xxx-xxxx</div>
+              <div class="actions">
+                <a class="btn primary" href="animal_detail.html">상세</a>
+                <button class="btn ghost">♡ 즐겨찾기</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- 페이지네이션(모양만) -->
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:14px;">
+          <button class="btn ghost">이전</button>
+          <button class="btn primary">1</button>
+          <button class="btn ghost">2</button>
+          <button class="btn ghost">3</button>
+          <button class="btn ghost">다음</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© PetMatch</span>
+  </footer>
+</body>
+</html>
