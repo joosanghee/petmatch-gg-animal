@@ -7,7 +7,7 @@ FROM animal_hospital_status
 WHERE 영업상태명 = '정상'
 ORDER BY addr ASC;
 
-CREATE TABLE if not EXISTS phamercy AS
+CREATE TABLE if not EXISTS pharmacy AS
 SELECT 
     사업장명 AS name,
     소재지시설전화번호 AS tel,
