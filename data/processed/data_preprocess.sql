@@ -23,3 +23,22 @@ SELECT
     소재지지번주소 AS addr
 FROM stray_animal_shelter_status
 ORDER BY addr ASC;
+
+CREATE TABLE if not EXISTS protection AS
+SELECT 
+    발견장소 AS findplace,
+    소재지지번주소 AS addr,
+	공고고유번호 AS fid,
+	공고시작일자 as startdate,
+	공고종료일자 as enddate,
+	품종 as breed,
+	색상 as color,
+	나이 as age,
+	체중 as weight,
+	성별 as sex,
+	중성화여부 as neutering,
+	특징 as 
+	
+FROM animal_pharmacy_status
+WHERE 상태 = '보호중'
+ORDER BY addr ASC;
