@@ -19,12 +19,17 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        
+        {% if session.get('is_admin') == 1 %}
+          <a class="btn primary" href="/admin" style="padding: 6px 12px; font-size: 13px;">관리자</a>
+        {% endif %}
+
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
       {% endif %}
-    </nav>
+          </nav>
   </header>
 
   <main class="container">

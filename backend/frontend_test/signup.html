@@ -16,6 +16,9 @@
       
       {% if session['user_id'] %}
         <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        {% if session.get('is_admin') == 1 %}
+           <a class="btn primary" href="/admin" style="padding: 6px 12px; font-size: 13px;">관리자</a>
+        {% endif %}
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
@@ -59,6 +62,11 @@
           <span>비밀번호</span>
           <input type="password" name="password" placeholder="비밀번호 입력" required
             style="padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff;" />
+        </label>
+
+        <label class="field" style="flex-direction:row; align-items:center; gap:10px; margin-top:10px; cursor:pointer;">
+          <input type="checkbox" name="is_admin" value="1" style="width:auto; transform: scale(1.2);">
+          <span style="font-weight:bold; color:var(--accent);">관리자 계정으로 가입 (데이터 수정 권한)</span>
         </label>
 
         <button class="btn primary full" type="submit" style="margin-top:20px;">

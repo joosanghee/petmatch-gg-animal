@@ -48,7 +48,19 @@
     <section class="layout">
       <aside class="filters">
         <h2>필터</h2>
-        <label class="field"><span>지역</span><select id="regionFilter"><option value="전체">전체</option><option {% if curr_region=='수원' %}selected{% endif %}>수원</option><option {% if curr_region=='성남' %}selected{% endif %}>성남</option><option {% if curr_region=='용인' %}selected{% endif %}>용인</option><option {% if curr_region=='고양' %}selected{% endif %}>고양</option></select></label>
+        <label class="field">
+          <span>지역</span>
+          <select id="regionFilter">
+            <option value="전체">전체</option>
+            
+            {% for area in region_list %}
+              <option value="{{ area }}" {% if curr_region == area %}selected{% endif %}>
+                {{ area }}
+              </option>
+            {% endfor %}
+            
+          </select>
+        </label>
         <label class="field"><span>동물종</span><select id="speciesFilter"><option value="전체">전체</option><option {% if curr_species=='개' %}selected{% endif %}>개</option><option {% if curr_species=='고양이' %}selected{% endif %}>고양이</option></select></label>
         <label class="field"><span>성별</span><select id="genderFilter"><option value="전체">전체</option><option {% if curr_gender=='수컷' %}selected{% endif %}>수컷</option><option {% if curr_gender=='암컷' %}selected{% endif %}>암컷</option></select></label>
         <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
@@ -58,7 +70,10 @@
       <section class="results">
         <div class="results-head">
           <div>결과 <b>{{ animals|length }}</b>건</div>
-          <select class="sort"><option>최신순</option></select>
+          <select id="sortFilter" onchange="applyFilters()" style="padding:5px; border-radius:6px; border:1px solid #ddd;">
+            <option value="newest" {% if curr_sort == 'newest' %}selected{% endif %}>최신순</option>
+            <option value="oldest" {% if curr_sort == 'oldest' %}selected{% endif %}>오래된순</option>
+          </select>
         </div>
 
         <div class="grid">
@@ -149,10 +164,14 @@
         const region = document.getElementById('regionFilter').value;
         const species = document.getElementById('speciesFilter').value;
         const gender = document.getElementById('genderFilter').value;
+        const sort = document.getElementById('sortFilter').value;
+
         let url = `/animals?keyword=${encodeURIComponent(keyword)}`;
         if(region !== '전체') url += `&region=${encodeURIComponent(region)}`;
         if(species !== '전체') url += `&species=${encodeURIComponent(species)}`;
         if(gender !== '전체') url += `&gender=${encodeURIComponent(gender)}`;
+        url += `&sort=${encodeURIComponent(sort)}`;
+        
         window.location.href = url;
     }
     function quickFilter(k, v) { window.location.href = `/animals?${k}=${encodeURIComponent(v)}`; }

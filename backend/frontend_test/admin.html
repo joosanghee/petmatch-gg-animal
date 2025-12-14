@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 관리자 모드</title>
+  <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
+  <style>
+    .admin-container { display: flex; gap: 20px; flex-wrap: wrap; }
+    .admin-section { flex: 1; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); min-width: 300px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--line); padding-bottom: 10px; }
+    .data-list { max-height: 400px; overflow-y: auto; }
+    .data-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .data-item:hover { background: #f9f9f9; }
+    .del-btn { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .add-form { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    .add-form input, .add-form select { margin-bottom: 8px; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><a href="/" style="text-decoration:none; color:inherit;">🐾 PetMatch Admin</a></div>
+    <nav class="nav">
+      <a href="/">홈으로</a>
+      <a class="btn ghost" href="/logout">로그아웃</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1 style="margin: 20px 0;">👑 관리자 대시보드</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding:10px; margin-bottom:10px; border-radius:8px; background:{{ '#fee2e2' if category=='error' else '#dcfce7' }}; color:{{ '#991b1b' if category=='error' else '#166534' }};">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-container">
+      
+      <section class="admin-section">
+        <div class="admin-header"><h3>🐕 유기동물 관리</h3></div>
+        
+        <form class="add-form" action="/admin/add" method="POST">
+          <input type="hidden" name="item_type" value="animal">
+          
+          <div style="margin-bottom:8px; font-weight:bold; color:var(--accent);">📸 기본 정보</div>
+          <input name="breed" placeholder="품종 (예: 말티즈, 한국 고양이)" required>
+          <input name="image_url" placeholder="이미지 주소 (http://...)" required>
+
+          <div style="display:flex; gap:5px;">
+             <input name="gender" placeholder="성별 (수컷/암컷)" style="flex:1;">
+          </div>
+          
+          <div style="display:flex; gap:5px; margin-top:5px;">
+             <input name="weight" placeholder="체중 (예: 5kg)" style="flex:1;">
+             <input name="years" placeholder="나이 (예: 2023년생)" style="flex:1;">
+          </div>
+
+          <div style="margin:10px 0 5px 0; font-weight:bold; color:var(--accent);">📅 공고 기간</div>
+          <div style="display:flex; gap:5px; align-items:center;">
+             <span style="font-size:12px;">시작일</span>
+             <input type="date" name="register_date" required style="flex:1;">
+          </div>
+          <div style="display:flex; gap:5px; align-items:center;">
+             <span style="font-size:12px;">종료일</span>
+             <input type="date" name="register_end_date" required style="flex:1;">
+          </div>
+
+          <div style="margin:10px 0 5px 0; font-weight:bold; color:var(--accent);">🏠 보호 장소</div>
+          <input name="region" placeholder="발견 지역 (예: 수원시)">
+          <input name="shelter_name" placeholder="보호소 이름">
+          
+          <button class="btn primary full" type="submit" style="margin-top:10px;">동물 등록하기</button>
+        </form>
+
+        <div class="data-list">
+          {% for item in animals %}
+          <div class="data-item">
+            <div>
+               <strong>{{ item['breed'] }}</strong> ({{ item['region'] }})<br>
+               <span style="color:#888; font-size:12px;">{{ item['register_date'] }}</span>
+            </div>
+            <form action="/admin/delete/animal/{{ item['animal_id'] }}" method="POST" onsubmit="return confirm('정말 삭제할까요?');">
+               <button class="del-btn">삭제</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-header"><h3>🏠 보호소 관리</h3></div>
+        
+        <form class="add-form" action="/admin/add" method="POST">
+          <input type="hidden" name="item_type" value="shelter">
+          <input name="name" placeholder="보호소 이름" required>
+          <input name="phone" placeholder="전화번호">
+          <input name="address" placeholder="주소">
+          <button class="btn primary full" type="submit">보호소 추가</button>
+        </form>
+
+        <div class="data-list">
+          {% for item in shelters %}
+          <div class="data-item">
+            <div><strong>{{ item['name'] }}</strong><br><span style="color:#888">{{ item['phone'] }}</span></div>
+            <form action="/admin/delete/shelter/{{ item['shelter_id'] }}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
+               <button class="del-btn">삭제</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-header"><h3>🏥 병원 관리</h3></div>
+        
+        <form class="add-form" action="/admin/add" method="POST">
+          <input type="hidden" name="item_type" value="hospital">
+          <input name="name" placeholder="병원 이름" required>
+          <input name="phone" placeholder="전화번호">
+          <input name="address" placeholder="주소">
+          <button class="btn primary full" type="submit">병원 추가</button>
+        </form>
+
+        <div class="data-list">
+          {% for item in hospitals %}
+          <div class="data-item">
+            <div><strong>{{ item['name'] }}</strong><br><span style="color:#888">{{ item['address'] }}</span></div>
+            <form action="/admin/delete/hospital/{{ item['hospital_id'] }}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
+               <button class="del-btn">삭제</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+    </div>
+  </main>
+</body>
+</html>

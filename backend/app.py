@@ -2,141 +2,106 @@ import sqlite3
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 app = Flask(__name__, template_folder='frontend_test', static_folder='frontend_test')
 app.secret_key = 'super_secret_key_for_petmatch_prince_minjae'
 
-# --- 경로 설정 ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ANIMAL_DB_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed', 'animal_data.db')
 USER_DB_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed', 'user_data.db')
 
-# --- DB 연결 함수 ---
 def get_animal_db():
-    if not os.path.exists(ANIMAL_DB_PATH): return None
     conn = sqlite3.connect(ANIMAL_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def get_user_db():
-    if not os.path.exists(USER_DB_PATH): return None
     conn = sqlite3.connect(USER_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- 헬퍼 함수: 현재 로그인한 유저의 찜 목록(ID 리스트) 가져오기 ---
-def get_user_favorites():
-    if 'user_id' not in session: return []
-    conn = get_user_db()
-    favs = []
-    if conn:
-        rows = conn.execute('SELECT animal_id FROM favorites WHERE user_id = ?', (session['user_id'],)).fetchall()
-        favs = [row['animal_id'] for row in rows]
-        conn.close()
-    return favs
-
-# --- 라우트 ---
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session or session.get('is_admin') != 1:
+            flash("관리자만 접근할 수 있습니다.", "error")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/style.css')
-def serve_css():
-    return send_from_directory('frontend_test', 'style.css')
+def serve_css(): return send_from_directory('frontend_test', 'style.css')
 
 @app.route('/')
 def index():
     conn = get_animal_db()
-    latest_animals = []
-    if conn:
-        latest_animals = conn.execute('SELECT * FROM animal_status ORDER BY register_date DESC LIMIT 4').fetchall()
-        conn.close()
-    
-    # 찜한 상태 표시를 위해 내 찜 목록 가져오기
-    fav_ids = get_user_favorites()
-    
-    return render_template('index.html', latest_animals=latest_animals, fav_ids=fav_ids)
+    items = conn.execute('SELECT * FROM animal_status ORDER BY register_date DESC LIMIT 4').fetchall()
+    conn.close()
+    return render_template('index.html', latest_animals=items)
+
+
+
+
 
 @app.route('/animals')
 def animal_list():
     conn = get_animal_db()
     animals = []
+    region_list = []
+    
+    # 파라미터 받기
     keyword = request.args.get('keyword', '')
     region = request.args.get('region', '전체')
     species = request.args.get('species', '전체')
     gender = request.args.get('gender', '전체')
+    sort = request.args.get('sort', 'newest')
     
     sql = "SELECT * FROM animal_status WHERE 1=1"
     params = []
 
     if conn:
-        if keyword:
-            sql += " AND (breed LIKE ? OR shelter_name LIKE ?)"
-            params.append(f'%{keyword}%'); params.append(f'%{keyword}%')
-        if region != '전체':
-            sql += " AND region LIKE ?"
-            params.append(f'%{region}%')
-        if gender == '수컷': sql += " AND gender = 'M'"
-        elif gender == '암컷': sql += " AND gender = 'F'"
-        if species == '개': sql += " AND breed NOT LIKE '%고양이%'"
-        elif species == '고양이': sql += " AND breed LIKE '%고양이%'"
-        
-        sql += " ORDER BY register_date DESC"
-        animals = conn.execute(sql, params).fetchall()
-        conn.close()
+        try:
+            regions_data = conn.execute("SELECT DISTINCT region FROM animal_status WHERE region IS NOT NULL AND region != '' ORDER BY region").fetchall()
+            region_list = [row['region'] for row in regions_data]
+
+            # --- 기존 검색 로직 시작 ---
+            if keyword:
+                sql += " AND (breed LIKE ? OR shelter_name LIKE ?)"
+                params.extend([f'%{keyword}%', f'%{keyword}%'])
             
-    fav_ids = get_user_favorites()
+            if region != '전체':
+                sql += " AND region LIKE ?"
+                params.append(f'%{region}%')
+            
+            if species == '고양이':
+                sql += " AND breed LIKE '%고양이%'"
+            elif species == '개':
+                sql += " AND breed NOT LIKE '%고양이%'"
+
+            if gender == '수컷':
+                sql += " AND (gender = 'M' OR gender LIKE '수컷%')"
+            elif gender == '암컷':
+                sql += " AND (gender = 'F' OR gender LIKE '암컷%')"
+            
+            if sort == 'oldest':
+                sql += " ORDER BY register_date ASC"
+            else:
+                sql += " ORDER BY register_date DESC"
+            
+            animals = conn.execute(sql, params).fetchall()
+        except Exception as e:
+            print(f"검색 오류: {e}")
+        finally:
+            conn.close()
+            
+
     return render_template('animals.html', animals=animals, 
+                           region_list=region_list,
                            curr_keyword=keyword, curr_region=region, 
                            curr_species=species, curr_gender=gender,
-                           fav_ids=fav_ids)
+                           curr_sort=sort)
 
-# ⭐️ [신규] 좋아요 토글 (API)
-@app.route('/api/favorite/<int:animal_id>', methods=['POST'])
-def toggle_favorite(animal_id):
-    if 'user_id' not in session:
-        return jsonify({'status': 'fail', 'message': '로그인이 필요합니다.'}), 401
-
-    conn = get_user_db()
-    user_id = session['user_id']
-    
-    # 이미 찜했는지 확인
-    exists = conn.execute('SELECT 1 FROM favorites WHERE user_id=? AND animal_id=?', (user_id, animal_id)).fetchone()
-    
-    if exists:
-        # 있으면 삭제 (취소)
-        conn.execute('DELETE FROM favorites WHERE user_id=? AND animal_id=?', (user_id, animal_id))
-        action = 'removed'
-    else:
-        # 없으면 추가 (찜)
-        conn.execute('INSERT INTO favorites (user_id, animal_id) VALUES (?, ?)', (user_id, animal_id))
-        action = 'added'
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'status': 'success', 'action': action})
-
-# ⭐️ [신규] 마이페이지 (내가 찜한 동물들)
-@app.route('/mypage')
-def mypage():
-    if 'user_id' not in session:
-        flash("로그인이 필요한 페이지입니다.", 'error')
-        return redirect(url_for('login'))
-        
-    # 1. 유저 DB에서 찜한 ID들 가져오기
-    fav_ids = get_user_favorites()
-    
-    # 2. 동물 DB에서 해당 ID들의 상세 정보 가져오기
-    fav_animals = []
-    if fav_ids:
-        conn = get_animal_db()
-        # "SELECT * FROM ... WHERE animal_id IN (1, 3, 5)" 형태로 쿼리 생성
-        placeholders = ','.join('?' for _ in fav_ids)
-        sql = f"SELECT * FROM animal_status WHERE animal_id IN ({placeholders})"
-        fav_animals = conn.execute(sql, fav_ids).fetchall()
-        conn.close()
-        
-    return render_template('mypage.html', animals=fav_animals, user_name=session['user_name'])
-
-# --- (기존 병원, 보호소, 로그인 등 코드는 그대로 유지) ---
 @app.route('/hospital')
 def hospital_list():
     conn = get_animal_db()
@@ -144,24 +109,17 @@ def hospital_list():
     keyword = request.args.get('keyword', '')
     type_filter = request.args.get('type', '전체')
     region_filter = request.args.get('region', '전체')
-    
-    if conn:
-        base_query = """SELECT * FROM (
-            SELECT hospital_id as id, name, address, phone, region, '동물병원' as type FROM hospital_final
-            UNION ALL
-            SELECT pharmacy_id as id, name, address, phone, region, '동물약국' as type FROM pharmacy_final
-        ) AS base WHERE 1=1"""
+    try:
+        base_query = "SELECT * FROM (SELECT hospital_id as id, name, address, phone, region, '동물병원' as type FROM hospital_final UNION ALL SELECT pharmacy_id as id, name, address, phone, region, '동물약국' as type FROM pharmacy_final) WHERE 1=1"
         params = []
         if keyword:
             base_query += " AND (name LIKE ? OR address LIKE ?)"
-            params.append(f'%{keyword}%'); params.append(f'%{keyword}%')
-        if type_filter != '전체':
-            base_query += " AND type = ?"; params.append(type_filter)
-        if region_filter != '전체':
-            base_query += " AND region LIKE ?"; params.append(f'%{region_filter}%')
+            params.extend([f'%{keyword}%', f'%{keyword}%'])
+        if type_filter != '전체': base_query += " AND type = ?"; params.append(type_filter)
+        if region_filter != '전체': base_query += " AND region LIKE ?"; params.append(f'%{region_filter}%')
         base_query += " ORDER BY name ASC"
         entities = conn.execute(base_query, params).fetchall()
-        conn.close()
+    finally: conn.close()
     return render_template('hospital.html', entities=entities, curr_keyword=keyword, curr_type=type_filter, curr_region=region_filter)
 
 @app.route('/shelter')
@@ -170,28 +128,27 @@ def shelter_list():
     shelters = []
     keyword = request.args.get('keyword', '')
     region_filter = request.args.get('region', '전체')
-    if conn:
+    try:
         sql = "SELECT * FROM shelter_final WHERE 1=1"
         params = []
         if keyword:
             sql += " AND (name LIKE ? OR address LIKE ?)"
-            params.append(f'%{keyword}%'); params.append(f'%{keyword}%')
-        if region_filter != '전체':
-            sql += " AND address LIKE ?"; params.append(f'%{region_filter}%')
+            params.extend([f'%{keyword}%', f'%{keyword}%'])
+        if region_filter != '전체': sql += " AND address LIKE ?"; params.append(f'%{region_filter}%')
         sql += " ORDER BY name ASC"
         shelters = conn.execute(sql, params).fetchall()
-        conn.close()
+    finally: conn.close()
     return render_template('shelter.html', shelters=shelters, curr_keyword=keyword, curr_region=region_filter)
 
 @app.route('/api/animal/<int:id>')
 def get_animal_detail(id):
     conn = get_animal_db()
-    animal_data = {}
-    if conn:
+    data = {}
+    try:
         row = conn.execute('SELECT * FROM animal_status WHERE animal_id = ?', (id,)).fetchone()
-        if row: animal_data = dict(row)
-        conn.close()
-    return jsonify(animal_data)
+        if row: data = dict(row)
+    finally: conn.close()
+    return jsonify(data)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -204,36 +161,97 @@ def login():
         if user and check_password_hash(user['password_hash'], password):
             session['user_id'] = user['id']
             session['user_name'] = user['name']
+            session['is_admin'] = user['is_admin']
             flash(f"환영합니다, {user['name']}님!", 'success')
             return redirect(url_for('index'))
-        else:
-            flash("이메일 또는 비밀번호가 올바르지 않습니다.", 'error')
+        else: flash("로그인 실패", 'error')
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        hashed_pw = generate_password_hash(password)
+        name, email, pw = request.form['name'], request.form['email'], request.form['password']
+        is_admin = 1 if request.form.get('is_admin') else 0
+        hashed = generate_password_hash(pw)
         conn = get_user_db()
         try:
-            conn.execute('INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)', (email, hashed_pw, name))
+            conn.execute('INSERT INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, ?)', (email, hashed, name, is_admin))
             conn.commit()
-            flash("회원가입 완료! 로그인해주세요.", 'success')
+            flash("가입 완료!", 'success')
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash("이미 등록된 이메일입니다.", 'error')
-        finally:
-            conn.close()
+        except: flash("이미 존재하는 이메일입니다.", 'error')
+        finally: conn.close()
     return render_template('signup.html')
 
 @app.route('/logout')
-def logout():
-    session.clear()
-    flash("로그아웃 되었습니다.", 'success')
-    return redirect(url_for('index'))
+def logout(): session.clear(); return redirect(url_for('index'))
+
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    conn = get_animal_db()
+    animals = conn.execute("SELECT * FROM animal_status ORDER BY register_date").fetchall()
+    shelters = conn.execute("SELECT * FROM shelter_final ORDER BY name").fetchall()
+    hospitals = conn.execute("SELECT * FROM hospital_final ORDER BY name").fetchall()
+    conn.close()
+    return render_template('admin.html', animals=animals, shelters=shelters, hospitals=hospitals)
+
+@app.route('/admin/delete/<type>/<int:id>', methods=['POST'])
+@admin_required
+def delete_item(type, id):
+    conn = get_animal_db()
+    try:
+        if type == 'animal': conn.execute("DELETE FROM animal_status WHERE animal_id = ?", (id,))
+        elif type == 'shelter': conn.execute("DELETE FROM shelter_final WHERE shelter_id = ?", (id,))
+        elif type == 'hospital': conn.execute("DELETE FROM hospital_final WHERE hospital_id = ?", (id,))
+        conn.commit()
+    finally: conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+
+
+@app.route('/admin/add', methods=['POST'])
+@admin_required
+def add_item():
+    t = request.form['item_type']
+    conn = get_animal_db()
+    try:
+        if t == 'animal':
+            reg_date = request.form['register_date'].replace('-', '')
+            end_date = request.form['register_end_date'].replace('-', '')
+
+            conn.execute("""
+                INSERT INTO animal_status 
+                (breed, gender, weight, years, region, shelter_name, register_date, register_end_date, image_url) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                request.form['breed'],
+                request.form['gender'],
+                request.form['weight'],
+                request.form['years'],
+                request.form['region'],
+                request.form['shelter_name'],
+                reg_date,
+                end_date,
+                request.form['image_url']
+            ))
+            
+        elif t == 'shelter':
+            conn.execute("INSERT INTO shelter_final (name, phone, address) VALUES (?,?,?)", 
+                         (request.form['name'], request.form['phone'], request.form['address']))
+            
+        elif t == 'hospital':
+            conn.execute("INSERT INTO hospital_final (name, phone, address, region, lat, lon) VALUES (?,?,?,?,0,0)", 
+                         (request.form['name'], request.form['phone'], request.form['address'], '기타'))
+            
+        conn.commit()
+        flash("성공적으로 추가되었습니다!", 'success')
+    except Exception as e:
+        flash(f"추가 실패: {e}", 'error')
+        print(f"에러: {e}")
+    finally:
+        conn.close()
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
