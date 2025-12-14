@@ -102,43 +102,88 @@ def animal_list():
                            curr_species=species, curr_gender=gender,
                            curr_sort=sort)
 
+# --- 3. 병원/약국 목록  ---
 @app.route('/hospital')
 def hospital_list():
     conn = get_animal_db()
     entities = []
+    region_list = []
+
     keyword = request.args.get('keyword', '')
     type_filter = request.args.get('type', '전체')
     region_filter = request.args.get('region', '전체')
+    
     try:
+
+        r_query = """
+            SELECT DISTINCT region FROM hospital_final WHERE region IS NOT NULL AND region != ''
+            UNION
+            SELECT DISTINCT region FROM pharmacy_final WHERE region IS NOT NULL AND region != ''
+            ORDER BY region
+        """
+        region_rows = conn.execute(r_query).fetchall()
+        region_list = [row['region'] for row in region_rows]
+
+
         base_query = "SELECT * FROM (SELECT hospital_id as id, name, address, phone, region, '동물병원' as type FROM hospital_final UNION ALL SELECT pharmacy_id as id, name, address, phone, region, '동물약국' as type FROM pharmacy_final) WHERE 1=1"
         params = []
         if keyword:
             base_query += " AND (name LIKE ? OR address LIKE ?)"
             params.extend([f'%{keyword}%', f'%{keyword}%'])
-        if type_filter != '전체': base_query += " AND type = ?"; params.append(type_filter)
-        if region_filter != '전체': base_query += " AND region LIKE ?"; params.append(f'%{region_filter}%')
+        if type_filter != '전체':
+            base_query += " AND type = ?"
+            params.append(type_filter)
+        if region_filter != '전체':
+            base_query += " AND region LIKE ?"
+            params.append(f'%{region_filter}%')
         base_query += " ORDER BY name ASC"
         entities = conn.execute(base_query, params).fetchall()
-    finally: conn.close()
-    return render_template('hospital.html', entities=entities, curr_keyword=keyword, curr_type=type_filter, curr_region=region_filter)
+    finally:
+        conn.close()
 
+    return render_template('hospital.html', entities=entities, 
+                           region_list=region_list,
+                           curr_keyword=keyword, curr_type=type_filter, curr_region=region_filter)
+
+# --- 4. 보호소 목록  ---
 @app.route('/shelter')
 def shelter_list():
     conn = get_animal_db()
     shelters = []
+    region_list = [] 
+
     keyword = request.args.get('keyword', '')
     region_filter = request.args.get('region', '전체')
+    
     try:
+        all_shelters = conn.execute("SELECT address FROM shelter_final WHERE address IS NOT NULL").fetchall()
+        temp_regions = set()
+        for row in all_shelters:
+            addr = row['address'].split()
+            if len(addr) >= 2 and addr[0] == '경기도':
+                temp_regions.add(addr[1]) # '경기도' 다음 단어 (수원시 등)
+            elif len(addr) >= 1:
+                temp_regions.add(addr[0])
+        
+        region_list = sorted(list(temp_regions)) # 가나다순 정렬
+
+
         sql = "SELECT * FROM shelter_final WHERE 1=1"
         params = []
         if keyword:
             sql += " AND (name LIKE ? OR address LIKE ?)"
             params.extend([f'%{keyword}%', f'%{keyword}%'])
-        if region_filter != '전체': sql += " AND address LIKE ?"; params.append(f'%{region_filter}%')
+        if region_filter != '전체':
+            sql += " AND address LIKE ?"
+            params.append(f'%{region_filter}%')
         sql += " ORDER BY name ASC"
         shelters = conn.execute(sql, params).fetchall()
-    finally: conn.close()
-    return render_template('shelter.html', shelters=shelters, curr_keyword=keyword, curr_region=region_filter)
+    finally:
+        conn.close()
+
+    return render_template('shelter.html', shelters=shelters, 
+                           region_list=region_list,
+                           curr_keyword=keyword, curr_region=region_filter)
 
 @app.route('/api/animal/<int:id>')
 def get_animal_detail(id):

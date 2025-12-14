@@ -23,6 +23,8 @@
         
         {% if session.get('is_admin') == 1 %}
           <a class="btn primary" href="/admin" style="padding: 6px 12px; font-size: 13px;">관리자</a>
+        {% else %}
+          <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
         {% endif %}
 
         <a class="btn ghost" href="/logout">로그아웃</a>

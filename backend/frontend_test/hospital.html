@@ -15,7 +15,14 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        
+        {% if session.get('is_admin') == 1 %}
+          <a class="btn primary" href="/admin" style="padding: 6px 12px; font-size: 13px;">관리자</a>
+        {% else %}
+          <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
+        {% endif %}
+
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
@@ -50,11 +57,14 @@
           <span>지역</span>
           <select id="regionFilter">
             <option value="전체">전체</option>
-            <option {% if curr_region=='수원' %}selected{% endif %}>수원</option>
-            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
-            <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
-            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
-            </select>
+            
+            {% for area in region_list %}
+              <option value="{{ area }}" {% if curr_region == area %}selected{% endif %}>
+                {{ area }}
+              </option>
+            {% endfor %}
+            
+          </select>
         </label>
         
         <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
