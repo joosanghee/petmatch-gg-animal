@@ -1,0 +1,157 @@
+<!-- 보호소 -->
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 보호소</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none; color:inherit;">🐾 PetMatch</a>
+    </div>
+    <nav class="nav">
+      <a href="animals.html">유기동물</a>
+      <a href="shelter.html">보호소</a>
+      <a href="hospital.html">병원/약국</a>
+      <a class="btn ghost" href="login.html">로그인</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero" style="margin-bottom:16px;">
+      <h1 style="margin-bottom:8px;">보호소 정보</h1>
+      <p style="margin-bottom:14px;">보호소 연락처와 주소를 확인하고, 공고 동물을 찾아보세요.</p>
+
+      <div class="searchbar">
+        <input placeholder="보호소 이름, 지역(시/구), 주소 키워드 검색" />
+        <button class="btn primary">검색</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip">수원</button>
+        <button class="chip">성남</button>
+        <button class="chip">용인</button>
+        <button class="chip">고양</button>
+        <button class="chip">전화 있는 곳</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <!-- 필터 -->
+      <aside class="filters">
+        <h2>필터</h2>
+
+        <label class="field">
+          <span>지역(시)</span>
+          <select>
+            <option>전체</option><option>가평</option><option>고양</option>
+            <option>과천</option><option>광명</option><option>광주</option><option>구리</option><option>군포</option>
+            <option>김포</option><option>남양주</option><option>동두천</option><option>부천</option><option>성남</option>
+            <option>수원</option><option>시흥</option><option>안산</option><option>안성</option><option>안양</option>
+            <option>양주</option><option>양평</option><option>여주</option><option>연천</option><option>오산</option>
+            <option>용인</option><option>의왕</option><option>의정부</option><option>이천</option><option>파주</option>
+            <option>평택</option><option>포천</option><option>하남</option><option>화성</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>지역(구/동)</span>
+          <select>
+            <option>전체</option>
+            <option>장안구</option>
+            <option>분당구</option>
+            <option>기흥구</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>연락처</span>
+          <select>
+            <option>전체</option>
+            <option>전화 있음</option>
+            <option>전화 없음</option>
+          </select>
+        </label>
+
+        <button class="btn primary full" style="margin-top:6px;">적용</button>
+        <button class="btn ghost full" style="margin-top:8px;">초기화</button>
+
+        <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5;">
+          * 정적 확인용 화면입니다. 버튼/필터는 UI만 존재해도 정상입니다.
+        </div>
+      </aside>
+
+      <!-- 결과 -->
+      <section class="results">
+        <div class="results-head">
+          <div>결과 <b>18</b>곳</div>
+          <select class="sort">
+            <option>가나다순</option>
+            <option>지역순</option>
+          </select>
+        </div>
+
+        <div class="grid">
+          <!-- 보호소 카드 예시 1 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">OO시 동물보호센터</div>
+              <div class="meta">☎ 031-111-2222</div>
+              <div class="meta">주소: 경기도 수원시 장안구 ○○로 12</div>
+              <div class="actions">
+                <a class="btn primary" href="shelter_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 보호소 카드 예시 2 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">△△ 유기동물보호소</div>
+              <div class="meta">☎ 031-333-4444</div>
+              <div class="meta">주소: 경기도 성남시 분당구 △△대로 88</div>
+              <div class="actions">
+                <a class="btn primary" href="shelter_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 보호소 카드 예시 3 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">□□ 동물보호시설</div>
+              <div class="meta">☎ 031-555-6666</div>
+              <div class="meta">주소: 경기도 용인시 기흥구 □□로 101</div>
+              <div class="actions">
+                <a class="btn primary" href="shelter_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 보호소 카드 예시 4 -->
+          <article class="card">
+            <div class="thumb"></div>
+            <div class="card-body">
+              <div class="title">☆☆ 동물보호센터</div>
+              <div class="meta">☎ 031-777-8888</div>
+              <div class="meta">주소: 경기도 고양시 덕양구 ☆☆길 3</div>
+              <div class="actions">
+                <a class="btn primary" href="shelter_detail.html">정보 보기</a>
+                <button class="btn ghost">복사</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:14px;">
+          <button class="btn ghost">이전</button>

@@ -1,0 +1,86 @@
+<!-- 로그인 -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 로그인</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none; color:inherit;">🐾 PetMatch</a>
+    </div>
+    <nav class="nav">
+      <a href="animals.html">유기동물</a>
+      <a href="shelter.html">보호소</a>
+
+      <a href="hospital.html">병원/약국</a>
+      <a class="btn ghost" href="login.html">로그인</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero" style="max-width:520px; margin:22px auto 0;">
+      <h1 style="margin-bottom:8px;">로그인</h1>
+      <p style="margin-bottom:16px; color:var(--muted);">
+        즐겨찾기, 신청 내역 확인 등을 이용하려면 로그인하세요.
+      </p>
+
+      <!-- 로그인 폼 (정적 확인용: action 비워둠) -->
+      <form>
+        <label class="field">
+          <span>이메일/아이디</span>
+          <input
+            type="text"
+            placeholder="example@petmatch.gg"
+            style="padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff;"
+          />
+        </label>
+
+        <label class="field">
+          <span>비밀번호</span>
+          <input
+            type="password"
+            placeholder="비밀번호를 입력하세요"
+            style="padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff;"
+          />
+        </label>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted);">
+            <input type="checkbox" />
+            로그인 상태 유지
+          </label>
+          <a href="#" style="font-size:13px; color:var(--accent); text-decoration:none;">비밀번호 찾기</a>
+        </div>
+
+        <button class="btn primary full" type="button" style="margin-top:14px;">
+          로그인
+        </button>
+
+        <div style="margin-top:12px; font-size:13px; color:var(--muted); text-align:center;">
+          아직 계정이 없나요?
+          <a href="#" style="color:var(--accent); text-decoration:none; font-weight:700;">회원가입</a>
+        </div>
+
+        <!-- 에러/안내 메시지 자리(나중에 백엔드 붙일 때 쓰기 좋음) -->
+        <div
+          style="margin-top:14px; padding:12px; border:1px solid var(--line); border-radius:12px; background:#fff;"
+        >
+          <div style="font-weight:800; margin-bottom:4px;">안내</div>
+          <div style="font-size:13px; color:var(--muted); line-height:1.5;">
+            지금은 정적 화면 확인 단계라 로그인 기능은 동작하지 않습니다.
+            나중에 Flask 붙일 때 이 영역에 “아이디/비번 오류” 같은 메시지를 띄우면 됩니다.
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© PetMatch</span>
+  </footer>
+</body>
+</html>
