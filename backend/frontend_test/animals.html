@@ -11,9 +11,9 @@
     <div class="brand"><a href="/" style="text-decoration:none; color:inherit;">🐾 PetMatch</a></div>
     <nav class="nav">
       <a href="/animals">유기동물</a>
-      <a href="#">보호소</a>
+      <a href="/shelter">보호소</a>
       <a href="/hospital">병원/약국</a>
-      <a class="btn ghost" href="#">로그인</a>
+      <a class="btn ghost" href="/login">로그인</a>
     </nav>
   </header>
 
@@ -21,75 +21,74 @@
     <section class="hero" style="margin-bottom:16px;">
       <h1 style="margin-bottom:8px;">유기동물 목록</h1>
       <p style="margin-bottom:14px;">조건을 골라서 공고를 빠르게 찾아보세요.</p>
-
+      
       <div class="searchbar">
-        <input placeholder="품종, 지역, 키워드로 검색" />
-        <button class="btn primary">검색</button>
+        <input id="searchInput" placeholder="품종, 지역, 보호소명 검색" value="{{ curr_keyword }}" onkeypress="handleEnter(event)"/>
+        <button class="btn primary" onclick="applyFilters()">검색</button>
       </div>
 
       <div class="chips">
-        <button class="chip">강아지</button>
-        <button class="chip">고양이</button>
-        <button class="chip">수컷</button>
-        <button class="chip">암컷</button>
-        <button class="chip">중성화 예</button>
-        <button class="chip">마감임박</button>
+        <button class="chip" onclick="quickFilter('species', '개')">강아지</button>
+        <button class="chip" onclick="quickFilter('species', '고양이')">고양이</button>
+        <button class="chip" onclick="quickFilter('gender', '수컷')">수컷</button>
+        <button class="chip" onclick="quickFilter('gender', '암컷')">암컷</button>
       </div>
     </section>
 
     <section class="layout">
       <aside class="filters">
         <h2>필터</h2>
+        
         <label class="field">
           <span>지역</span>
-          <select>
-            <option>전체</option>
-            <option>가평</option><option>고양</option><option>과천</option><option>광명</option>
-            <option>광주</option><option>구리</option><option>군포</option><option>김포</option>
-            <option>남양주</option><option>동두천</option><option>부천</option><option>성남</option>
-            <option>수원</option><option>시흥</option><option>안산</option><option>안성</option>
-            <option>안양</option><option>양주</option><option>양평</option><option>여주</option>
-            <option>연천</option><option>오산</option><option>용인</option><option>의왕</option>
-            <option>의정부</option><option>이천</option><option>파주</option><option>평택</option>
-            <option>포천</option><option>하남</option><option>화성</option>
+          <select id="regionFilter">
+            <option value="전체">전체</option>
+            <option {% if curr_region=='가평' %}selected{% endif %}>가평</option>
+            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
+            <option {% if curr_region=='광주' %}selected{% endif %}>광주</option>
+            <option {% if curr_region=='구리' %}selected{% endif %}>구리</option>
+            <option {% if curr_region=='김포' %}selected{% endif %}>김포</option>
+            <option {% if curr_region=='남양주' %}selected{% endif %}>남양주</option>
+            <option {% if curr_region=='부천' %}selected{% endif %}>부천</option>
+            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
+            <option {% if curr_region=='수원' %}selected{% endif %}>수원</option>
+            <option {% if curr_region=='시흥' %}selected{% endif %}>시흥</option>
+            <option {% if curr_region=='안산' %}selected{% endif %}>안산</option>
+            <option {% if curr_region=='안양' %}selected{% endif %}>안양</option>
+            <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
+            <option {% if curr_region=='의정부' %}selected{% endif %}>의정부</option>
+            <option {% if curr_region=='파주' %}selected{% endif %}>파주</option>
+            <option {% if curr_region=='평택' %}selected{% endif %}>평택</option>
+            <option {% if curr_region=='화성' %}selected{% endif %}>화성</option>
           </select>
         </label>
+
         <label class="field">
           <span>동물종</span>
-          <select>
-            <option>전체</option><option>개</option><option>고양이</option><option>기타</option>
+          <select id="speciesFilter">
+            <option value="전체">전체</option>
+            <option {% if curr_species=='개' %}selected{% endif %}>개</option>
+            <option {% if curr_species=='고양이' %}selected{% endif %}>고양이</option>
           </select>
         </label>
+        
         <label class="field">
           <span>성별</span>
-          <select>
-            <option>전체</option><option>수컷</option><option>암컷</option><option>미상</option>
+          <select id="genderFilter">
+            <option value="전체">전체</option>
+            <option {% if curr_gender=='수컷' %}selected{% endif %}>수컷</option>
+            <option {% if curr_gender=='암컷' %}selected{% endif %}>암컷</option>
           </select>
         </label>
-        <label class="field">
-          <span>중성화</span>
-          <select>
-            <option>전체</option><option>예</option><option>아니오</option><option>미상</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>공고상태</span>
-          <select>
-            <option>전체</option><option>보호중</option><option>종료</option>
-          </select>
-        </label>
-        <button class="btn primary full" style="margin-top:6px;">적용</button>
-        <button class="btn ghost full" style="margin-top:8px;">초기화</button>
+
+        <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
+        <button class="btn ghost full" style="margin-top:8px;" onclick="location.href='/animals'">초기화</button>
       </aside>
 
       <section class="results">
         <div class="results-head">
           <div>결과 <b>{{ animals|length }}</b>건</div>
-          <select class="sort">
-            <option>최신순</option>
-            <option>마감임박순</option>
-            <option>체중 낮은순</option>
-          </select>
+          <select class="sort"><option>최신순</option></select>
         </div>
 
         <div class="grid">
@@ -103,33 +102,112 @@
                   <span style="font-size:30px;">🐕</span>
                 {% endif %}
               </div>
-              
               <div class="card-body">
-                <div class="title">{{ animal['breed'] }} · {{ animal['gender'] }} · {{ animal['weight'] }}</div>
+                <div class="title">{{ animal['breed'] }}</div>
+                <div class="meta">{{ animal['gender'] }} · {{ animal['weight'] }} · {{ animal['years'] }}</div>
                 <div class="meta">지역: {{ animal['region'] }}</div>
-                <div class="meta">공고: {{ animal['register_date'] }} ~ {{ animal['register_end_date'] }}</div>
                 <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
                 <div class="actions">
-                  <a class="btn primary" href="/detail/{{ animal['animal_id'] }}">상세</a>
+                  <button class="btn primary" onclick="openDetailModal({{ animal['animal_id'] }})">상세</button>
                   <button class="btn ghost">♡ 관심</button>
                 </div>
               </div>
             </article>
             {% endfor %}
           {% else %}
-            <p style="padding:20px;">등록된 유기동물 데이터가 없습니다.</p>
+            <p style="padding:20px;">조건에 맞는 친구가 없어요. 😢</p>
           {% endif %}
-        </div>
-
-        <div style="display:flex; gap:8px; justify-content:center; margin-top:14px;">
-          <button class="btn ghost">이전</button>
-          <button class="btn primary">1</button>
-          <button class="btn ghost">2</button>
-          <button class="btn ghost">3</button>
-          <button class="btn ghost">다음</button>
         </div>
       </section>
     </section>
   </main>
+
+  <div id="animalModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-window">
+      <button class="modal-close" onclick="closeModalButton()">×</button>
+      <div class="modal-image-area">
+        <img id="m_image" src="" alt="동물 이미지" />
+        <span id="m_emoji" style="font-size:50px; display:none;">🐕</span>
+      </div>
+      <div class="modal-content">
+        <div class="modal-tag" id="m_status">보호중</div>
+        <h2 id="m_breed" style="margin:0 0 10px 0;">품종명</h2>
+        <div class="modal-info-row"><div class="modal-label">특징/색상</div><div class="modal-value"><span id="m_gender"></span> / <span id="m_color"></span></div></div>
+        <div class="modal-info-row"><div class="modal-label">나이/체중</div><div class="modal-value"><span id="m_years"></span> / <span id="m_weight"></span></div></div>
+        <div class="modal-info-row"><div class="modal-label">발견장소</div><div class="modal-value" id="m_region">-</div></div>
+        <div class="modal-info-row"><div class="modal-label">공고기간</div><div class="modal-value"><span id="m_sdate"></span> ~ <span id="m_edate"></span></div></div>
+        <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+        <h3 style="font-size:16px; margin-bottom:8px;">🏠 보호소 정보</h3>
+        <div class="modal-info-row"><div class="modal-label">보호소명</div><div class="modal-value" id="m_shelter">-</div></div>
+        <div class="actions" style="margin-top:20px;">
+            <button class="btn primary full" onclick="alert('입양 문의 전화를 겁니다.')">📞 입양 문의하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. 필터 적용 함수 (검색버튼/적용버튼 클릭 시 실행)
+    function applyFilters() {
+        const keyword = document.getElementById('searchInput').value;
+        const region = document.getElementById('regionFilter').value;
+        const species = document.getElementById('speciesFilter').value;
+        const gender = document.getElementById('genderFilter').value;
+
+        // URL 생성 (예: /animals?keyword=푸들&region=수원...)
+        let url = `/animals?keyword=${encodeURIComponent(keyword)}`;
+        if(region !== '전체') url += `&region=${encodeURIComponent(region)}`;
+        if(species !== '전체') url += `&species=${encodeURIComponent(species)}`;
+        if(gender !== '전체') url += `&gender=${encodeURIComponent(gender)}`;
+
+        window.location.href = url; // 페이지 이동
+    }
+
+    // 2. 칩(빠른 검색) 버튼용 함수
+    function quickFilter(key, value) {
+        let url = `/animals?${key}=${encodeURIComponent(value)}`;
+        window.location.href = url;
+    }
+
+    // 3. 엔터키 입력 시 검색 실행
+    function handleEnter(e) {
+        if(e.key === 'Enter') applyFilters();
+    }
+
+    // --- 기존 상세 모달 관련 스크립트 ---
+    async function openDetailModal(id) {
+      try {
+        const response = await fetch(`/api/animal/${id}`);
+        const data = await response.json();
+        
+        document.getElementById('m_breed').innerText = data.breed || '품종 정보 없음';
+        document.getElementById('m_gender').innerText = data.gender || '-';
+        document.getElementById('m_color').innerText = data.color || '-';
+        document.getElementById('m_years').innerText = data.years || '-';
+        document.getElementById('m_weight').innerText = data.weight || '-';
+        document.getElementById('m_region').innerText = data.region || '-';
+        document.getElementById('m_sdate').innerText = data.register_date;
+        document.getElementById('m_edate').innerText = data.register_end_date;
+        document.getElementById('m_shelter').innerText = data.shelter_name || '-';
+
+        const imgEl = document.getElementById('m_image');
+        const emojiEl = document.getElementById('m_emoji');
+        if (data.image_url) {
+            imgEl.src = data.image_url;
+            imgEl.style.display = 'block';
+            emojiEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            emojiEl.style.display = 'block';
+        }
+        document.getElementById('animalModal').classList.add('active');
+      } catch (error) {
+        console.error('실패:', error);
+      }
+    }
+
+    function closeModalButton() { document.getElementById('animalModal').classList.remove('active'); }
+    function closeModal(event) { if (event.target === document.getElementById('animalModal')) closeModalButton(); }
+  </script>
 </body>
 </html>

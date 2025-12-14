@@ -11,9 +11,9 @@
     <div class="brand"><a href="/" style="text-decoration:none; color:inherit;">🐾 PetMatch</a></div>
     <nav class="nav">
       <a href="/animals">유기동물</a>
-      <a href="#">보호소</a>
+      <a href="/shelter">보호소</a>
       <a href="/hospital">병원/약국</a>
-      <a class="btn ghost" href="#">로그인</a>
+      <a class="btn ghost" href="/login">로그인</a>
     </nav>
   </header>
 
@@ -21,90 +21,94 @@
     <section class="hero" style="margin-bottom:16px;">
       <h1 style="margin-bottom:8px;">동물병원 · 동물약국</h1>
       <p style="margin-bottom:14px;">근처 병원/약국 연락처와 주소를 빠르게 확인하세요.</p>
+      
+      <div class="searchbar">
+        <input id="keywordInput" placeholder="이름, 주소 키워드 검색" value="{{ curr_keyword }}" onkeypress="handleEnter(event)"/>
+        <button class="btn primary" onclick="applyFilters()">검색</button>
+      </div>
     </section>
 
     <section class="layout">
-      <!-- 필터 -->
       <aside class="filters">
         <h2>필터</h2>
-
         <label class="field">
           <span>구분</span>
-          <select>
-            <option>전체</option>
-            <option>동물병원</option>
-            <option>동물약국</option>
+          <select id="typeFilter">
+            <option value="전체">전체</option>
+            <option {% if curr_type=='동물병원' %}selected{% endif %}>동물병원</option>
+            <option {% if curr_type=='동물약국' %}selected{% endif %}>동물약국</option>
           </select>
         </label>
-
+        
         <label class="field">
-          <span>지역(시)</span>
-          <select>
-            <option>전체</option>
-            <option>전체</option><option>가평</option><option>고양</option>
-            <option>과천</option><option>광명</option><option>광주</option><option>구리</option><option>군포</option>
-            <option>김포</option><option>남양주</option><option>동두천</option><option>부천</option><option>성남</option>
-            <option>수원</option><option>시흥</option><option>안산</option><option>안성</option><option>안양</option>
-            <option>양주</option><option>양평</option><option>여주</option><option>연천</option><option>오산</option>
-            <option>용인</option><option>의왕</option><option>의정부</option><option>이천</option><option>파주</option>
-            <option>평택</option><option>포천</option><option>하남</option><option>화성</option>
-          </select>
+          <span>지역</span>
+          <select id="regionFilter">
+            <option value="전체">전체</option>
+            <option {% if curr_region=='수원' %}selected{% endif %}>수원</option>
+            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
+            <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
+            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
+            <option {% if curr_region=='부천' %}selected{% endif %}>부천</option>
+            <option {% if curr_region=='화성' %}selected{% endif %}>화성</option>
+            <option {% if curr_region=='안산' %}selected{% endif %}>안산</option>
+            </select>
         </label>
-
-        <label class="field">
-          <span>지역(구/동)</span>
-          <select>
-            <option>전체</option>
-            <option>장안구</option>
-            <option>분당구</option>
-            <option>기흥구</option>
-          </select>
-        </label>
-
-        <button class="btn primary full" style="margin-top:6px;">적용</button>
-        <button class="btn ghost full" style="margin-top:8px;">초기화</button>
-
-        <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5;">
-        </div>
+        
+        <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
+        <button class="btn ghost full" style="margin-top:8px;" onclick="location.href='/hospital'">초기화</button>
       </aside>
 
-      <!-- 결과 -->
       <section class="results">
         <div class="results-head">
-          <div>결과 <b>24</b>곳</div>
-          <select class="sort">
-            <option>가나다순</option>
-            <option>지역순</option>
-          </select>
+          <div>결과 <b>{{ entities|length }}</b>곳</div>
+          <select class="sort"><option>가나다순</option></select>
         </div>
 
         <div class="grid">
-          <!-- 병원 카드 예시 -->
-          <article class="card">
-            <div class="thumb"></div>
-            <div class="card-body">
-              <div class="title">행복동물병원</div>
-              <div class="meta">구분: 동물병원</div>
-              <div class="meta">☎ 031-123-4567</div>
-              <div class="meta">주소: 경기도 수원시 장안구 ○○로 12</div>
-              <div class="actions">
-                <a class="btn primary" href="hospital_detail.html">정보 보기</a>
-                <button class="btn ghost">복사</button>
+          {% if entities %}
+            {% for item in entities %}
+            <article class="card">
+              <div class="thumb" style="background-color: #f4f4f4; display:flex; align-items:center; justify-content:center;">
+                 <span style="font-size:24px;">{% if item['type'] == '동물병원' %}🏥{% else %}💊{% endif %}</span>
               </div>
-            </div>
-            <div class="meta">☎ {{ item['phone'] }}</div>
-            <div class="meta">주소: {{ item['address'] }}</div>
-            <div class="actions">
-              <a class="btn primary" href="#">지도 보기</a>
-              <button class="btn ghost">복사</button>
-            </div>
-          </div>
-        </article>
-        {% endfor %}
-      {% else %}
-        <p style="padding:20px;">병원 데이터가 없습니다.</p>
-      {% endif %}
-    </div>
+              <div class="card-body">
+                <div class="title">{{ item['name'] }}</div>
+                <div class="meta" style="font-weight:bold; color: {% if item['type']=='동물병원' %}var(--accent){% else %}#3b82f6{% endif %};">
+                  {{ item['type'] }}
+                </div>
+                <div class="meta">☎ {{ item['phone'] }}</div>
+                <div class="meta">주소: {{ item['address'] }}</div>
+                <div class="actions">
+                  <a class="btn primary" href="https://map.naver.com/v5/search/{{ item['address'] }}" target="_blank">지도 보기</a>
+                  <button class="btn ghost">복사</button>
+                </div>
+              </div>
+            </article>
+            {% endfor %}
+          {% else %}
+            <p style="padding:20px;">검색 결과가 없습니다.</p>
+          {% endif %}
+        </div>
+      </section>
+    </section>
   </main>
+
+  <script>
+    function applyFilters() {
+      const keyword = document.getElementById('keywordInput').value;
+      const type = document.getElementById('typeFilter').value;
+      const region = document.getElementById('regionFilter').value;
+
+      let url = `/hospital?keyword=${encodeURIComponent(keyword)}`;
+      if (type !== '전체') url += `&type=${encodeURIComponent(type)}`;
+      if (region !== '전체') url += `&region=${encodeURIComponent(region)}`;
+      
+      window.location.href = url;
+    }
+    
+    function handleEnter(e) {
+      if(e.key === 'Enter') applyFilters();
+    }
+  </script>
 </body>
 </html>

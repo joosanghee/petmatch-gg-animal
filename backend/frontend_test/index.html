@@ -10,13 +10,10 @@
   <header class="topbar">
     <div class="brand"><a href="/" style="text-decoration:none; color:inherit;">🐾 PetMatch</a></div>
     <nav class="nav">
-      <a href="#">유기동물</a>
-      <a href="shelter.html">보호소</a>
-
-      <a href="hospital.html">병원/약국</a>
-
-      <a class="btn ghost" href="login.html">로그인</a>
-
+      <a href="/animals">유기동물</a>
+      <a href="/shelter">보호소</a>
+      <a href="/hospital">병원/약국</a>
+      <a class="btn ghost" href="/login">로그인</a>
     </nav>
   </header>
 
@@ -24,15 +21,17 @@
     <section class="hero">
       <h1>가족을 기다리는 친구들을 찾아요</h1>
       <p>지역/품종/성별로 빠르게 검색하고 보호소 정보를 확인하세요.</p>
+      
       <div class="searchbar">
-        <input placeholder="품종, 지역, 키워드로 검색" />
-        <button class="btn primary">검색</button>
+        <input id="homeSearchInput" placeholder="품종, 지역, 키워드로 검색" onkeypress="handleEnter(event)"/>
+        <button class="btn primary" onclick="goSearch()">검색</button>
       </div>
+      
       <div class="chips">
-        <button class="chip">강아지</button>
-        <button class="chip">고양이</button>
-        <button class="chip">수컷</button>
-        <button class="chip">암컷</button>
+        <button class="chip" onclick="goFilter('species', '개')">강아지</button>
+        <button class="chip" onclick="goFilter('species', '고양이')">고양이</button>
+        <button class="chip" onclick="goFilter('gender', '수컷')">수컷</button>
+        <button class="chip" onclick="goFilter('gender', '암컷')">암컷</button>
       </div>
     </section>
 
@@ -54,22 +53,46 @@
               {% endif %}
             </div>
             <div class="card-body">
-              <div class="title">{{ animal['breed'] }} · {{ animal['gender'] }} · {{ animal['weight'] }}</div>
+              <div class="title">{{ animal['breed'] }}</div>
+              <div class="meta">{{ animal['gender'] }} · {{ animal['weight'] }}</div>
               <div class="meta">지역: {{ animal['region'] }}</div>
               <div class="meta">공고: {{ animal['register_date'] }}</div>
               <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
               <div class="actions">
-                <a class="btn primary" href="/detail/{{ animal['animal_id'] }}">상세</a>
+                <a class="btn primary" href="/animals?keyword={{ animal['breed'] }}">보러가기</a>
                 <button class="btn ghost">♡</button>
               </div>
             </div>
           </article>
           {% endfor %}
         {% else %}
-          <p style="padding:20px;">등록된 유기동물이 없습니다.</p>
+          <p style="padding:20px;">최신 등록된 유기동물이 없습니다.</p>
         {% endif %}
-        </div>
+      </div>
     </section>
   </main>
+
+  <script>
+    // 검색 실행 함수
+    function goSearch() {
+        const keyword = document.getElementById('homeSearchInput').value;
+        if (keyword) {
+            // 동물 목록 페이지로 이동하면서 검색어 전달
+            window.location.href = `/animals?keyword=${encodeURIComponent(keyword)}`;
+        } else {
+            alert("검색어를 입력해주세요!");
+        }
+    }
+
+    // 칩 버튼 클릭 시 필터 적용 이동
+    function goFilter(key, value) {
+        window.location.href = `/animals?${key}=${encodeURIComponent(value)}`;
+    }
+
+    // 엔터키 처리
+    function handleEnter(e) {
+        if(e.key === 'Enter') goSearch();
+    }
+  </script>
 </body>
 </html>
