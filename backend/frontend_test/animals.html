@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PetMatch - 유기동물 목록</title>
   <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
+  <style>
+    /* 꽉 찬 하트 스타일 */
+    .btn.liked { color: red; border-color: red; background: #fff5f5; }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +19,7 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
@@ -44,35 +48,9 @@
     <section class="layout">
       <aside class="filters">
         <h2>필터</h2>
-        <label class="field">
-          <span>지역</span>
-          <select id="regionFilter">
-            <option value="전체">전체</option>
-            <option {% if curr_region=='수원' %}selected{% endif %}>수원</option>
-            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
-            <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
-            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
-            <option {% if curr_region=='부천' %}selected{% endif %}>부천</option>
-            <option {% if curr_region=='화성' %}selected{% endif %}>화성</option>
-            <option {% if curr_region=='안산' %}selected{% endif %}>안산</option>
-            </select>
-        </label>
-        <label class="field">
-          <span>동물종</span>
-          <select id="speciesFilter">
-            <option value="전체">전체</option>
-            <option {% if curr_species=='개' %}selected{% endif %}>개</option>
-            <option {% if curr_species=='고양이' %}selected{% endif %}>고양이</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>성별</span>
-          <select id="genderFilter">
-            <option value="전체">전체</option>
-            <option {% if curr_gender=='수컷' %}selected{% endif %}>수컷</option>
-            <option {% if curr_gender=='암컷' %}selected{% endif %}>암컷</option>
-          </select>
-        </label>
+        <label class="field"><span>지역</span><select id="regionFilter"><option value="전체">전체</option><option {% if curr_region=='수원' %}selected{% endif %}>수원</option><option {% if curr_region=='성남' %}selected{% endif %}>성남</option><option {% if curr_region=='용인' %}selected{% endif %}>용인</option><option {% if curr_region=='고양' %}selected{% endif %}>고양</option></select></label>
+        <label class="field"><span>동물종</span><select id="speciesFilter"><option value="전체">전체</option><option {% if curr_species=='개' %}selected{% endif %}>개</option><option {% if curr_species=='고양이' %}selected{% endif %}>고양이</option></select></label>
+        <label class="field"><span>성별</span><select id="genderFilter"><option value="전체">전체</option><option {% if curr_gender=='수컷' %}selected{% endif %}>수컷</option><option {% if curr_gender=='암컷' %}selected{% endif %}>암컷</option></select></label>
         <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
         <button class="btn ghost full" style="margin-top:8px;" onclick="location.href='/animals'">초기화</button>
       </aside>
@@ -96,18 +74,24 @@
               </div>
               <div class="card-body">
                 <div class="title">{{ animal['breed'] }}</div>
-                <div class="meta">{{ animal['gender'] }} · {{ animal['weight'] }} · {{ animal['years'] }}</div>
+                <div class="meta">{{ animal['gender'] }} · {{ animal['weight'] }}</div>
                 <div class="meta">지역: {{ animal['region'] }}</div>
                 <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
                 <div class="actions">
                   <button class="btn primary" onclick="openDetailModal({{ animal['animal_id'] }})">상세</button>
-                  <button class="btn ghost">♡ 관심</button>
+                  
+                  <button class="btn ghost {% if animal['animal_id'] in fav_ids %}liked{% endif %}" 
+                          id="btn-fav-{{ animal['animal_id'] }}"
+                          onclick="toggleFavorite({{ animal['animal_id'] }})">
+                    {% if animal['animal_id'] in fav_ids %}♥{% else %}♡{% endif %} 관심
+                  </button>
+
                 </div>
               </div>
             </article>
             {% endfor %}
           {% else %}
-            <p style="padding:20px;">조건에 맞는 친구가 없어요. 😢</p>
+            <p style="padding:20px;">조건에 맞는 친구가 없어요.</p>
           {% endif %}
         </div>
       </section>
@@ -117,20 +101,15 @@
   <div id="animalModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-window">
       <button class="modal-close" onclick="closeModalButton()">×</button>
-      <div class="modal-image-area">
-        <img id="m_image" src="" alt="동물 이미지" />
-        <span id="m_emoji" style="font-size:50px; display:none;">🐕</span>
-      </div>
+      <div class="modal-image-area"><img id="m_image" src="" alt="" /><span id="m_emoji" style="font-size:50px;">🐕</span></div>
       <div class="modal-content">
         <div class="modal-tag" id="m_status">보호중</div>
-        <h2 id="m_breed" style="margin:0 0 10px 0;">품종명</h2>
-        <div class="modal-info-row"><div class="modal-label">특징/색상</div><div class="modal-value"><span id="m_gender"></span> / <span id="m_color"></span></div></div>
-        <div class="modal-info-row"><div class="modal-label">나이/체중</div><div class="modal-value"><span id="m_years"></span> / <span id="m_weight"></span></div></div>
-        <div class="modal-info-row"><div class="modal-label">발견장소</div><div class="modal-value" id="m_region">-</div></div>
+        <h2 id="m_breed"></h2>
+        <div class="modal-info-row"><div class="modal-label">특징</div><div class="modal-value"><span id="m_gender"></span> / <span id="m_weight"></span></div></div>
+        <div class="modal-info-row"><div class="modal-label">발견장소</div><div class="modal-value" id="m_region"></div></div>
         <div class="modal-info-row"><div class="modal-label">공고기간</div><div class="modal-value"><span id="m_sdate"></span> ~ <span id="m_edate"></span></div></div>
         <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
-        <h3 style="font-size:16px; margin-bottom:8px;">🏠 보호소 정보</h3>
-        <div class="modal-info-row"><div class="modal-label">보호소명</div><div class="modal-value" id="m_shelter">-</div></div>
+        <div class="modal-info-row"><div class="modal-label">보호소</div><div class="modal-value" id="m_shelter"></div></div>
         <div class="actions" style="margin-top:20px;">
             <button class="btn primary full" onclick="alert('입양 문의 전화를 겁니다.')">📞 입양 문의하기</button>
         </div>
@@ -139,56 +118,63 @@
   </div>
 
   <script>
+    //  좋아요 토글 함수
+    async function toggleFavorite(animalId) {
+        try {
+            const response = await fetch(`/api/favorite/${animalId}`, { method: 'POST' });
+            if (response.status === 401) {
+                alert('로그인이 필요한 기능입니다!');
+                window.location.href = '/login';
+                return;
+            }
+            const data = await response.json();
+            
+            // 버튼 스타일 변경
+            const btn = document.getElementById(`btn-fav-${animalId}`);
+            if (data.action === 'added') {
+                btn.classList.add('liked');
+                btn.innerHTML = '♥ 관심';
+            } else {
+                btn.classList.remove('liked');
+                btn.innerHTML = '♡ 관심';
+            }
+        } catch (error) {
+            console.error('좋아요 처리 실패:', error);
+        }
+    }
+
+    //필터/검색/모달 스크립트
     function applyFilters() {
         const keyword = document.getElementById('searchInput').value;
         const region = document.getElementById('regionFilter').value;
         const species = document.getElementById('speciesFilter').value;
         const gender = document.getElementById('genderFilter').value;
-
         let url = `/animals?keyword=${encodeURIComponent(keyword)}`;
         if(region !== '전체') url += `&region=${encodeURIComponent(region)}`;
         if(species !== '전체') url += `&species=${encodeURIComponent(species)}`;
         if(gender !== '전체') url += `&gender=${encodeURIComponent(gender)}`;
         window.location.href = url;
     }
-
-    function quickFilter(key, value) {
-        let url = `/animals?${key}=${encodeURIComponent(value)}`;
-        window.location.href = url;
-    }
-
+    function quickFilter(k, v) { window.location.href = `/animals?${k}=${encodeURIComponent(v)}`; }
     function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
-
+    
     async function openDetailModal(id) {
-      try {
-        const response = await fetch(`/api/animal/${id}`);
-        const data = await response.json();
-        
-        document.getElementById('m_breed').innerText = data.breed || '품종 정보 없음';
-        document.getElementById('m_gender').innerText = data.gender || '-';
-        document.getElementById('m_color').innerText = data.color || '-';
-        document.getElementById('m_years').innerText = data.years || '-';
-        document.getElementById('m_weight').innerText = data.weight || '-';
-        document.getElementById('m_region').innerText = data.region || '-';
-        document.getElementById('m_sdate').innerText = data.register_date;
-        document.getElementById('m_edate').innerText = data.register_end_date;
-        document.getElementById('m_shelter').innerText = data.shelter_name || '-';
-
-        const imgEl = document.getElementById('m_image');
-        const emojiEl = document.getElementById('m_emoji');
-        if (data.image_url) {
-            imgEl.src = data.image_url;
-            imgEl.style.display = 'block';
-            emojiEl.style.display = 'none';
-        } else {
-            imgEl.style.display = 'none';
-            emojiEl.style.display = 'block';
-        }
-        document.getElementById('animalModal').classList.add('active');
-      } catch (error) { console.error('실패:', error); }
+      const response = await fetch(`/api/animal/${id}`);
+      const data = await response.json();
+      document.getElementById('m_breed').innerText = data.breed;
+      document.getElementById('m_gender').innerText = data.gender;
+      document.getElementById('m_weight').innerText = data.weight;
+      document.getElementById('m_region').innerText = data.region;
+      document.getElementById('m_sdate').innerText = data.register_date;
+      document.getElementById('m_edate').innerText = data.register_end_date;
+      document.getElementById('m_shelter').innerText = data.shelter_name;
+      const imgEl = document.getElementById('m_image');
+      if (data.image_url) { imgEl.src = data.image_url; imgEl.style.display='block'; document.getElementById('m_emoji').style.display='none'; }
+      else { imgEl.style.display='none'; document.getElementById('m_emoji').style.display='block'; }
+      document.getElementById('animalModal').classList.add('active');
     }
     function closeModalButton() { document.getElementById('animalModal').classList.remove('active'); }
-    function closeModal(event) { if (event.target === document.getElementById('animalModal')) closeModalButton(); }
-  </script>
+    function closeModal(e) { if (e.target === document.getElementById('animalModal')) closeModalButton(); }
+  </script> 
 </body>
 </html>

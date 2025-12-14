@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PetMatch</title>
   <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
+  <style>
+    /* 하트 버튼 활성화 스타일 */
+    .btn.liked { color: red; border-color: red; background: #fff5f5; }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +19,7 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
@@ -66,7 +70,12 @@
               <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
               <div class="actions">
                 <a class="btn primary" href="/animals?keyword={{ animal['breed'] }}">보러가기</a>
-                <button class="btn ghost">♡</button>
+                
+                <button class="btn ghost {% if animal['animal_id'] in fav_ids %}liked{% endif %}" 
+                        id="btn-fav-{{ animal['animal_id'] }}"
+                        onclick="toggleFavorite({{ animal['animal_id'] }})">
+                  {% if animal['animal_id'] in fav_ids %}♥{% else %}♡{% endif %}
+                </button>
               </div>
             </div>
           </article>
@@ -79,6 +88,32 @@
   </main>
 
   <script>
+    // 좋아요 토글 스크립트 추가
+    async function toggleFavorite(animalId) {
+        try {
+            const response = await fetch(`/api/favorite/${animalId}`, { method: 'POST' });
+            if (response.status === 401) {
+                alert('로그인이 필요한 기능입니다!');
+                window.location.href = '/login';
+                return;
+            }
+            const data = await response.json();
+            
+            // 버튼 스타일 변경
+            const btn = document.getElementById(`btn-fav-${animalId}`);
+            if (data.action === 'added') {
+                btn.classList.add('liked');
+                btn.innerHTML = '♥';
+            } else {
+                btn.classList.remove('liked');
+                btn.innerHTML = '♡';
+            }
+        } catch (error) {
+            console.error('좋아요 처리 실패:', error);
+        }
+    }
+
+    // 기존 검색/필터 함수들
     function goSearch() {
         const keyword = document.getElementById('homeSearchInput').value;
         if (keyword) {
@@ -87,9 +122,11 @@
             alert("검색어를 입력해주세요!");
         }
     }
+
     function goFilter(key, value) {
         window.location.href = `/animals?${key}=${encodeURIComponent(value)}`;
     }
+
     function handleEnter(e) {
         if(e.key === 'Enter') goSearch();
     }

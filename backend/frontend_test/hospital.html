@@ -15,7 +15,7 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a href="/mypage" style="font-weight:bold; color:var(--accent);">마이페이지</a>
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>

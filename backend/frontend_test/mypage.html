@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PetMatch - 마이페이지</title>
+  <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><a href="/" style="text-decoration:none; color:inherit;">🐾 PetMatch</a></div>
+    <nav class="nav">
+      <a href="/animals">유기동물</a>
+      <a href="/shelter">보호소</a>
+      <a href="/hospital">병원/약국</a>
+      <a class="btn ghost" href="/logout">로그아웃</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero" style="margin-bottom:20px;">
+      <h1 style="margin-bottom:8px;">안녕하세요, {{ user_name }}님! 👑</h1>
+      <p style="margin-bottom:14px;">내가 관심있어한 친구들을 모아봤어요.</p>
+    </section>
+
+    <section class="results">
+      <div class="results-head">
+        <div>총 <b>{{ animals|length }}</b>마리를 찜하셨네요.</div>
+      </div>
+
+      <div class="grid">
+        {% if animals %}
+          {% for animal in animals %}
+          <article class="card">
+            <div class="thumb" style="background-color: #eee; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+              {% if animal['image_url'] %}
+                <img src="{{ animal['image_url'] }}" alt="{{ animal['breed'] }}" style="width:100%; height:100%; object-fit:cover;">
+              {% else %}
+                <span style="font-size:30px;">🐶</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <div class="title">{{ animal['breed'] }}</div>
+              <div class="meta">{{ animal['gender'] }} · {{ animal['weight'] }}</div>
+              <div class="meta">지역: {{ animal['region'] }}</div>
+              <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
+              <div class="actions">
+                <button class="btn primary" onclick="alert('목록에서 삭제하려면 상세페이지나 목록에서 하트를 눌러주세요.')">상세보기</button>
+                <button class="btn ghost" style="color:red;">♥ 찜함</button>
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        {% else %}
+          <p style="padding:20px;">아직 찜한 동물이 없습니다. 마음에 드는 친구에게 하트를 눌러주세요! ❤️</p>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
