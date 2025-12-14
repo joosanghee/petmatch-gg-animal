@@ -1,32 +1,64 @@
 import sqlite3
-import os
 import pandas as pd
+import os
 
-# --- 1. 경로 설정 (database/py 폴더 기준) ---
-db_name = "animal_data.db"
-# 💡 현재 파일(database/py)을 기준으로 DB 파일(database/db) 경로 설정
-db_folder = "../processed"
-db_path = os.path.join(db_folder, db_name) 
+# --- 1. 경로 설정 ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# 💡 CSV 파일 폴더 위치 (환경에 맞게 수정 필요)
+# 보통 backend/.. -> root -> data/csv 구조라고 가정
+csv_folder = os.path.join(current_dir, "../csv")      
+db_folder = os.path.join(current_dir, "../processed") 
+db_path = os.path.join(db_folder, "animal_data.db")
 
-# --- 2. SQL 스크립트 (NULL 최소화 로직 적용) ---
+# 로드할 CSV 목록
+# 🚨 '유기 동물 보호 현황_품종코드.csv'가 csv_folder 안에 있어야 합니다!
+csv_files = {
+    "유기동물보호현황utf8.csv": "stray_animal_protection_status",
+    "동물병원현황utf8.csv": "animal_hospital_status",
+    "동물약국현황utf8.csv": "animal_pharmacy_status",
+    "유기 동물 보호 현황_품종코드.csv": "breed_codes"  # 💡 품종 코드표 추가
+}
+
+# --- 2. CSV를 DB로 로드하는 함수 ---
+def load_csv_to_db(conn):
+    print("📂 CSV 파일 로드 시작 (보호소 현황은 기존 데이터 유지)...")
+    
+    if not os.path.exists(csv_folder):
+        print(f"⚠️ 경고: CSV 폴더({csv_folder})를 찾을 수 없습니다. 경로를 확인해주세요.")
+    
+    for file_name, table_name in csv_files.items():
+        file_path = os.path.join(csv_folder, file_name)
+        
+        if not os.path.exists(file_path):
+            print(f"  ❌ 파일 없음 (건너뜀): {file_name}")
+            continue
+            
+        try:
+            # 인코딩 자동 감지
+            try:
+                df = pd.read_csv(file_path, encoding='cp949')
+            except:
+                df = pd.read_csv(file_path, encoding='utf-8')
+            
+            # DB에 저장
+            df.to_sql(table_name, conn, if_exists='replace', index=False)
+            print(f"  ✅ {table_name} 업데이트 완료 ({len(df)}건)")
+        except Exception as e:
+            print(f"  ❌ {file_name} 로드 실패: {e}")
+
+# --- 3. 최종 테이블 생성 SQL (품종 매칭 로직 포함) ---
 SQL_SCRIPT = """
--- Foreign Key 제약 조건 활성화 (필수)
 PRAGMA foreign_keys = ON;
 
--- 기존 최종 테이블 삭제
+-- 1. 기존 최종 테이블 삭제 (새로 만들기 위해)
 DROP TABLE IF EXISTS animal_status;
 DROP TABLE IF EXISTS shelter_final;
 DROP TABLE IF EXISTS hospital_final;
 DROP TABLE IF EXISTS pharmacy_final;
 
--- 기존 임시 테이블 삭제 (정리 목적)
-DROP TABLE IF EXISTS hospital;
-DROP TABLE IF EXISTS phamercy;
-DROP TABLE IF EXISTS shelter;
-DROP TABLE IF EXISTS protection;
-
--- 3. shelter_final 테이블 생성 및 데이터 삽입 (PK 정의)
-CREATE TABLE IF NOT EXISTS shelter_final (
+-- 2. 보호소 테이블 (shelter_final)
+-- 기존에 로드된 stray_animal_shelter_status 테이블 사용
+CREATE TABLE shelter_final (
     shelter_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     capacity INTEGER,
@@ -35,17 +67,12 @@ CREATE TABLE IF NOT EXISTS shelter_final (
 );
 
 INSERT INTO shelter_final (name, capacity, address, phone)
-SELECT
-    업체명,
-    CAST(수용능력수 AS INTEGER),
-    소재지지번주소,
-    업체전화번호
+SELECT 업체명, CAST(수용능력수 AS INTEGER), 소재지지번주소, 업체전화번호
 FROM stray_animal_shelter_status
 ORDER BY 업체명;
 
-
--- 4. hospital_final 테이블 생성 및 데이터 삽입 (PK, lat/lon 추가)
-CREATE TABLE IF NOT EXISTS hospital_final (
+-- 3. 동물병원 테이블
+CREATE TABLE hospital_final (
     hospital_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT,
@@ -54,22 +81,12 @@ CREATE TABLE IF NOT EXISTS hospital_final (
     lat REAL,
     lon REAL
 );
-
 INSERT INTO hospital_final (name, address, phone, region, lat, lon)
-SELECT 
-    사업장명,
-    소재지지번주소,
-    소재지시설전화번호,
-    시군명,
-    WGS84위도,
-    WGS84경도
-FROM animal_hospital_status
-WHERE 영업상태명 = '정상'
-ORDER BY 사업장명;
+SELECT 사업장명, 소재지지번주소, 소재지시설전화번호, 시군명, WGS84위도, WGS84경도
+FROM animal_hospital_status WHERE 영업상태명 = '정상' ORDER BY 사업장명;
 
-
--- 5. pharmacy_final 테이블 생성 및 데이터 삽입 (PK, lat/lon 추가)
-CREATE TABLE IF NOT EXISTS pharmacy_final (
+-- 4. 동물약국 테이블
+CREATE TABLE pharmacy_final (
     pharmacy_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT,
@@ -78,97 +95,85 @@ CREATE TABLE IF NOT EXISTS pharmacy_final (
     lat REAL,
     lon REAL
 );
-
 INSERT INTO pharmacy_final (name, address, phone, region, lat, lon)
-SELECT 
-    사업장명,
-    소재지지번주소,
-    소재지시설전화번호,
-    시군명,
-    WGS84위도,
-    WGS84경도
-FROM animal_pharmacy_status
-WHERE 영업상태명 = '정상'
-ORDER BY 사업장명;
+SELECT 사업장명, 소재지지번주소, 소재지시설전화번호, 시군명, WGS84위도, WGS84경도
+FROM animal_pharmacy_status WHERE 영업상태명 = '정상' ORDER BY 사업장명;
 
-
--- 6. animal_status 테이블 생성 및 데이터 삽입 (PK, FK 정의, 전화번호/이름 JOIN 사용)
-CREATE TABLE IF NOT EXISTS animal_status (
+-- 5. 유기동물 현황 테이블 (animal_status)
+-- 💡 breed 컬럼에 한글 품종명을 넣습니다.
+CREATE TABLE animal_status (
     animal_id INTEGER PRIMARY KEY,
     region TEXT,
     register_date TEXT,
     register_end_date TEXT,
-    breed TEXT,
+    breed TEXT,       -- 웹사이트에 표시될 품종명 (예: 골든 리트리버)
+    breed_code TEXT,  -- 원본 품종 코드 (예: 000054) - 필요할까봐 남겨둠
     color TEXT,
     years TEXT,
     weight TEXT,
     gender TEXT,
-    shelter_id INTEGER, -- FK
+    image_url TEXT,
+    shelter_id INTEGER,
     shelter_name TEXT,
-    
     FOREIGN KEY(shelter_id) REFERENCES shelter_final(shelter_id)
 );
 
 INSERT INTO animal_status (
-    region, register_date, register_end_date, breed, color, years, weight, gender, shelter_id, shelter_name
+    region, register_date, register_end_date, breed, breed_code, color, years, weight, gender, image_url, shelter_id, shelter_name
 )
--- 💡 전화번호와 이름 두 가지 기준으로 JOIN하여 NULL을 최소화
 SELECT
     p.시군명,
     p.공고시작일자,
     p.공고종료일자,
-    p.품종,
+    -- 🐶 [품종 매칭 핵심 로직]
+    -- breed_codes 테이블(b)과 조인하여 품종명(b.품종명)을 가져옵니다.
+    -- 만약 매칭되는 이름이 없으면 원본 코드(p.품종)를 그대로 씁니다.
+    COALESCE(b.품종명, p.품종) AS breed_final,
+    p.품종 AS breed_code_origin,
     p.색상,
     p.나이,
     p.체중,
     p.성별,
-    -- COALESCE: 1순위(전화번호 매칭) 실패 시 2순위(이름 매칭) shelter_id 사용
-    COALESCE(s_phone.shelter_id, s_name.shelter_id) AS shelter_id,
+    -- 이미지 (썸네일 우선)
+    COALESCE(p.썸네일이미지경로, p.이미지경로),
+    COALESCE(s_phone.shelter_id, s_name.shelter_id),
     p.보호소명
 FROM stray_animal_protection_status p
--- 1차 JOIN: 전화번호 기준으로 매칭 시도 (하이픈 제거하여 형식 불일치 보완 시도)
-LEFT JOIN shelter_final s_phone 
-    ON REPLACE(p.보호소전화번호, '-', '') = REPLACE(s_phone.phone, '-', '')
--- 2차 JOIN: 보호소명 기준으로 매칭 시도
-LEFT JOIN shelter_final s_name 
-    ON p.보호소명 = s_name.name
-WHERE p.상태 = '보호중' 
+-- 💡 품종 코드로 조인 (숫자로 변환하여 비교하면 '000054'와 '54'를 같게 인식함)
+LEFT JOIN breed_codes b ON CAST(p.품종 AS INTEGER) = CAST(b.품종 AS INTEGER)
+LEFT JOIN shelter_final s_phone ON REPLACE(p.보호소전화번호, '-', '') = REPLACE(s_phone.phone, '-', '')
+LEFT JOIN shelter_final s_name ON p.보호소명 = s_name.name
+WHERE p.상태 = '보호중'
 ORDER BY p.공고시작일자 DESC;
 """
 
-def execute_final_sql(db_path, sql_script):
+def main():
+    if not os.path.exists(db_folder):
+        os.makedirs(db_folder, exist_ok=True)
+        
+    conn = sqlite3.connect(db_path)
+    print(f"데이터베이스 연결: {db_path}")
+
+    # 1. CSV 로드 (품종 코드 포함)
+    load_csv_to_db(conn)
+    
+    # 2. SQL 실행 (매칭 및 테이블 생성)
     try:
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        print(f"데이터베이스 '{db_path}'에 연결했습니다.")
-        
-        cursor.executescript(sql_script)
+        conn.executescript(SQL_SCRIPT)
         conn.commit()
-        print("\n✅ 모든 SQL 쿼리가 성공적으로 실행되었습니다.")
+        print("\n✅ DB 업데이트 완료! (품종 코드 -> 품종명 변환 적용됨)")
         
-        # NULL 값 재확인 쿼리
-        null_count_query = """
-        SELECT 
-            COUNT(*) AS total_count,
-            COUNT(CASE WHEN shelter_id IS NULL THEN 1 END) AS null_shelter_id_count,
-            CAST(COUNT(CASE WHEN shelter_id IS NULL THEN 1 END) AS REAL) * 100 / COUNT(*) AS null_percentage
-        FROM animal_status;
-        """
-        null_stats = pd.read_sql_query(null_count_query, conn)
-        null_count = null_stats['null_shelter_id_count'][0]
-        null_percent = null_stats['null_percentage'][0]
+        # 확인
+        cursor = conn.cursor()
+        cursor.execute("SELECT breed, breed_code FROM animal_status LIMIT 3")
+        rows = cursor.fetchall()
+        print(f"👀 변환 결과 예시 (품종명 / 코드): {rows}")
         
-        print(f"\n[재실행 후 shelter_id NULL 값 현황]")
-        print(f"NULL인 'shelter_id' 개수: {null_count}개")
-        print(f"NULL 비율: {null_percent:.2f}%")
-
     except Exception as e:
-        print(f"\n❌ SQL 실행 중 오류 발생: {e}")
-    finally:
-        if 'conn' in locals() and conn:
-            conn.close()
-            print("데이터베이스 연결 종료.")
+        print(f"\n❌ SQL 실행 오류: {e}")
+        print("💡 팁: 'no such table: breed_codes' 오류라면 CSV 파일명을 확인하세요.")
+    
+    conn.close()
 
-# 최종 통합 SQL 스크립트 실행
-execute_final_sql(db_path, SQL_SCRIPT)
+if __name__ == "__main__":
+    main()
