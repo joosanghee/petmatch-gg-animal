@@ -4,19 +4,17 @@ import os
 
 # --- 1. 경로 설정 ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# 💡 CSV 파일 폴더 위치 (환경에 맞게 수정 필요)
-# 보통 backend/.. -> root -> data/csv 구조라고 가정
+# CSV 파일 폴더 위치
 csv_folder = os.path.join(current_dir, "../csv")      
 db_folder = os.path.join(current_dir, "../processed") 
 db_path = os.path.join(db_folder, "animal_data.db")
 
 # 로드할 CSV 목록
-# 🚨 '유기 동물 보호 현황_품종코드.csv'가 csv_folder 안에 있어야 합니다!
 csv_files = {
     "유기동물보호현황utf8.csv": "stray_animal_protection_status",
     "동물병원현황utf8.csv": "animal_hospital_status",
     "동물약국현황utf8.csv": "animal_pharmacy_status",
-    "유기 동물 보호 현황_품종코드.csv": "breed_codes"  # 💡 품종 코드표 추가
+    "유기 동물 보호 현황_품종코드.csv": "breed_codes" 
 }
 
 # --- 2. CSV를 DB로 로드하는 함수 ---
@@ -100,7 +98,6 @@ SELECT 사업장명, 소재지지번주소, 소재지시설전화번호, 시군�
 FROM animal_pharmacy_status WHERE 영업상태명 = '정상' ORDER BY 사업장명;
 
 -- 5. 유기동물 현황 테이블 (animal_status)
--- 💡 breed 컬럼에 한글 품종명을 넣습니다.
 CREATE TABLE animal_status (
     animal_id INTEGER PRIMARY KEY,
     region TEXT,
@@ -125,9 +122,6 @@ SELECT
     p.시군명,
     p.공고시작일자,
     p.공고종료일자,
-    -- 🐶 [품종 매칭 핵심 로직]
-    -- breed_codes 테이블(b)과 조인하여 품종명(b.품종명)을 가져옵니다.
-    -- 만약 매칭되는 이름이 없으면 원본 코드(p.품종)를 그대로 씁니다.
     COALESCE(b.품종명, p.품종) AS breed_final,
     p.품종 AS breed_code_origin,
     p.색상,
@@ -139,7 +133,6 @@ SELECT
     COALESCE(s_phone.shelter_id, s_name.shelter_id),
     p.보호소명
 FROM stray_animal_protection_status p
--- 💡 품종 코드로 조인 (숫자로 변환하여 비교하면 '000054'와 '54'를 같게 인식함)
 LEFT JOIN breed_codes b ON CAST(p.품종 AS INTEGER) = CAST(b.품종 AS INTEGER)
 LEFT JOIN shelter_final s_phone ON REPLACE(p.보호소전화번호, '-', '') = REPLACE(s_phone.phone, '-', '')
 LEFT JOIN shelter_final s_name ON p.보호소명 = s_name.name
@@ -161,17 +154,16 @@ def main():
     try:
         conn.executescript(SQL_SCRIPT)
         conn.commit()
-        print("\n✅ DB 업데이트 완료! (품종 코드 -> 품종명 변환 적용됨)")
+        print("\n DB 업데이트 완료!")
         
         # 확인
         cursor = conn.cursor()
         cursor.execute("SELECT breed, breed_code FROM animal_status LIMIT 3")
         rows = cursor.fetchall()
-        print(f"👀 변환 결과 예시 (품종명 / 코드): {rows}")
+        print(f" 변환 결과 예시 (품종명 / 코드): {rows}")
         
     except Exception as e:
-        print(f"\n❌ SQL 실행 오류: {e}")
-        print("💡 팁: 'no such table: breed_codes' 오류라면 CSV 파일명을 확인하세요.")
+        print(f"\n SQL 실행 오류: {e}")
     
     conn.close()
 
