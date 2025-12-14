@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PetMatch - 로그인</title>
+  <title>PetMatch - 회원가입</title>
   <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
 </head>
 <body>
@@ -15,7 +15,7 @@
       <a href="/hospital">병원/약국</a>
       
       {% if session['user_id'] %}
-        <span style="font-size:14px; font-weight:bold;">{{ session['user_name'] }}님</span>
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
         <a class="btn ghost" href="/logout">로그아웃</a>
       {% else %}
         <a class="btn ghost" href="/login">로그인</a>
@@ -25,9 +25,9 @@
 
   <main class="container">
     <section class="hero" style="max-width:520px; margin:22px auto 0;">
-      <h1 style="margin-bottom:8px;">로그인</h1>
+      <h1 style="margin-bottom:8px;">회원가입</h1>
       <p style="margin-bottom:16px; color:var(--muted);">
-        즐겨찾기, 신청 내역 확인 등을 이용하려면 로그인하세요.
+        가입하고 가족을 찾는 여정을 함께해요.
       </p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -42,7 +42,13 @@
         {% endif %}
       {% endwith %}
 
-      <form action="/login" method="POST">
+      <form action="/signup" method="POST">
+        <label class="field">
+          <span>이름 (닉네임)</span>
+          <input type="text" name="name" placeholder="이름(닉네임)" required
+            style="padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff;" />
+        </label>
+
         <label class="field">
           <span>이메일</span>
           <input type="email" name="email" placeholder="example@petmatch.gg" required
@@ -51,17 +57,17 @@
 
         <label class="field">
           <span>비밀번호</span>
-          <input type="password" name="password" placeholder="비밀번호를 입력하세요" required
+          <input type="password" name="password" placeholder="비밀번호 입력" required
             style="padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff;" />
         </label>
 
-        <button class="btn primary full" type="submit" style="margin-top:14px;">
-          로그인
+        <button class="btn primary full" type="submit" style="margin-top:20px;">
+          가입하기
         </button>
 
         <div style="margin-top:12px; font-size:13px; color:var(--muted); text-align:center;">
-          아직 계정이 없나요?
-          <a href="/signup" style="color:var(--accent); text-decoration:none; font-weight:700;">회원가입</a>
+          이미 계정이 있으신가요?
+          <a href="/login" style="color:var(--accent); text-decoration:none; font-weight:700;">로그인하기</a>
         </div>
       </form>
     </section>

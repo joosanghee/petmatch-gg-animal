@@ -13,7 +13,13 @@
       <a href="/animals">유기동물</a>
       <a href="/shelter">보호소</a>
       <a href="/hospital">병원/약국</a>
-      <a class="btn ghost" href="/login">로그인</a>
+      
+      {% if session['user_id'] %}
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a class="btn ghost" href="/logout">로그아웃</a>
+      {% else %}
+        <a class="btn ghost" href="/login">로그인</a>
+      {% endif %}
     </nav>
   </header>
 
@@ -73,23 +79,17 @@
   </main>
 
   <script>
-    // 검색 실행 함수
     function goSearch() {
         const keyword = document.getElementById('homeSearchInput').value;
         if (keyword) {
-            // 동물 목록 페이지로 이동하면서 검색어 전달
             window.location.href = `/animals?keyword=${encodeURIComponent(keyword)}`;
         } else {
             alert("검색어를 입력해주세요!");
         }
     }
-
-    // 칩 버튼 클릭 시 필터 적용 이동
     function goFilter(key, value) {
         window.location.href = `/animals?${key}=${encodeURIComponent(value)}`;
     }
-
-    // 엔터키 처리
     function handleEnter(e) {
         if(e.key === 'Enter') goSearch();
     }

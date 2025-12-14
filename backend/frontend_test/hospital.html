@@ -13,7 +13,13 @@
       <a href="/animals">유기동물</a>
       <a href="/shelter">보호소</a>
       <a href="/hospital">병원/약국</a>
-      <a class="btn ghost" href="/login">로그인</a>
+      
+      {% if session['user_id'] %}
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a class="btn ghost" href="/logout">로그아웃</a>
+      {% else %}
+        <a class="btn ghost" href="/login">로그인</a>
+      {% endif %}
     </nav>
   </header>
 
@@ -48,9 +54,6 @@
             <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
             <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
             <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
-            <option {% if curr_region=='부천' %}selected{% endif %}>부천</option>
-            <option {% if curr_region=='화성' %}selected{% endif %}>화성</option>
-            <option {% if curr_region=='안산' %}selected{% endif %}>안산</option>
             </select>
         </label>
         
@@ -105,10 +108,7 @@
       
       window.location.href = url;
     }
-    
-    function handleEnter(e) {
-      if(e.key === 'Enter') applyFilters();
-    }
+    function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
   </script>
 </body>
 </html>

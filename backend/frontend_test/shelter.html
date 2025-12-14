@@ -13,7 +13,13 @@
       <a href="/animals">유기동물</a>
       <a href="/shelter">보호소</a>
       <a href="/hospital">병원/약국</a>
-      <a class="btn ghost" href="/login">로그인</a>
+      
+      {% if session['user_id'] %}
+        <span style="font-size:14px; font-weight:bold; margin-right:4px;">{{ session['user_name'] }}님</span>
+        <a class="btn ghost" href="/logout">로그아웃</a>
+      {% else %}
+        <a class="btn ghost" href="/login">로그인</a>
+      {% endif %}
     </nav>
   </header>
 
@@ -42,24 +48,10 @@
           <span>지역</span>
           <select id="regionFilter">
             <option value="전체">전체</option>
-            <option {% if curr_region=='가평' %}selected{% endif %}>가평</option>
-            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
-            <option {% if curr_region=='광주' %}selected{% endif %}>광주</option>
-            <option {% if curr_region=='구리' %}selected{% endif %}>구리</option>
-            <option {% if curr_region=='김포' %}selected{% endif %}>김포</option>
-            <option {% if curr_region=='남양주' %}selected{% endif %}>남양주</option>
-            <option {% if curr_region=='부천' %}selected{% endif %}>부천</option>
-            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
             <option {% if curr_region=='수원' %}selected{% endif %}>수원</option>
-            <option {% if curr_region=='시흥' %}selected{% endif %}>시흥</option>
-            <option {% if curr_region=='안산' %}selected{% endif %}>안산</option>
-            <option {% if curr_region=='안양' %}selected{% endif %}>안양</option>
-            <option {% if curr_region=='용인' %}selected{% endif %}>용인</option>
-            <option {% if curr_region=='의정부' %}selected{% endif %}>의정부</option>
-            <option {% if curr_region=='파주' %}selected{% endif %}>파주</option>
-            <option {% if curr_region=='평택' %}selected{% endif %}>평택</option>
-            <option {% if curr_region=='화성' %}selected{% endif %}>화성</option>
-          </select>
+            <option {% if curr_region=='성남' %}selected{% endif %}>성남</option>
+            <option {% if curr_region=='고양' %}selected{% endif %}>고양</option>
+            </select>
         </label>
         
         <button class="btn primary full" style="margin-top:6px;" onclick="applyFilters()">적용</button>
@@ -106,7 +98,6 @@
 
       let url = `/shelter?keyword=${encodeURIComponent(keyword)}`;
       if (region !== '전체') url += `&region=${encodeURIComponent(region)}`;
-      
       window.location.href = url;
     }
     
@@ -114,9 +105,7 @@
         window.location.href = `/shelter?region=${encodeURIComponent(regionName)}`;
     }
     
-    function handleEnter(e) {
-      if(e.key === 'Enter') applyFilters();
-    }
+    function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
   </script>
 </body>
 </html>
