@@ -83,7 +83,8 @@
                 <div class="meta">주소: {{ shelter['address'] }}</div>
                 <div class="actions">
                   <a class="btn primary" href="https://map.naver.com/v5/search/{{ shelter['address'] }}" target="_blank">지도 보기</a>
-                  <button class="btn ghost">복사</button>
+                  
+                  <button class="btn ghost" onclick="copyAddress('{{ shelter['address'] }}')">주소 복사</button>
                 </div>
               </div>
             </article>
@@ -111,6 +112,14 @@
     }
     
     function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
+    async function copyAddress(addr) {
+      try {
+        await navigator.clipboard.writeText(addr);
+        alert(`📋 주소가 복사되었습니다!\n\n[ ${addr} ]`);
+      } catch (err) {
+        alert('복사에 실패했습니다. 직접 선택해서 복사해주세요.');
+      }
+    }
   </script>
 </body>
 </html>

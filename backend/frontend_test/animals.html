@@ -6,7 +6,6 @@
   <title>PetMatch - 유기동물 목록</title>
   <link rel="stylesheet" href="{{ url_for('serve_css') }}" />
   <style>
-    /* 꽉 찬 하트 스타일 */
     .btn.liked { color: red; border-color: red; background: #fff5f5; }
   </style>
 </head>
@@ -59,13 +58,11 @@
           <span>지역</span>
           <select id="regionFilter">
             <option value="전체">전체</option>
-            
             {% for area in region_list %}
               <option value="{{ area }}" {% if curr_region == area %}selected{% endif %}>
                 {{ area }}
               </option>
             {% endfor %}
-            
           </select>
         </label>
         <label class="field"><span>동물종</span><select id="speciesFilter"><option value="전체">전체</option><option {% if curr_species=='개' %}selected{% endif %}>개</option><option {% if curr_species=='고양이' %}selected{% endif %}>고양이</option></select></label>
@@ -123,35 +120,45 @@
   <div id="animalModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-window">
       <button class="modal-close" onclick="closeModalButton()">×</button>
-      <div class="modal-image-area"><img id="m_image" src="" alt="" /><span id="m_emoji" style="font-size:50px;">🐕</span></div>
+      <div class="modal-image-area">
+          <img id="m_image" src="" alt="" />
+          <span id="m_emoji" style="font-size:50px; display:none;">🐕</span>
+      </div>
       <div class="modal-content">
         <div class="modal-tag" id="m_status">보호중</div>
         <h2 id="m_breed"></h2>
         <div class="modal-info-row"><div class="modal-label">특징</div><div class="modal-value"><span id="m_gender"></span> / <span id="m_weight"></span></div></div>
+        <div class="modal-info-row"><div class="modal-label">나이</div><div class="modal-value" id="m_years"></div></div>
         <div class="modal-info-row"><div class="modal-label">발견장소</div><div class="modal-value" id="m_region"></div></div>
         <div class="modal-info-row"><div class="modal-label">공고기간</div><div class="modal-value"><span id="m_sdate"></span> ~ <span id="m_edate"></span></div></div>
         <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
         <div class="modal-info-row"><div class="modal-label">보호소</div><div class="modal-value" id="m_shelter"></div></div>
         <div class="actions" style="margin-top:20px;">
-            <button class="btn primary full" onclick="alert('입양 문의 전화를 겁니다.')">📞 입양 문의하기</button>
+            <button class="btn primary full" onclick="contactShelter()">📞 입양 문의하기</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    //  좋아요 토글 함수
+    let currentShelterPhone = '';
+
+    // 좋아요 토글 함수
     async function toggleFavorite(animalId) {
         try {
             const response = await fetch(`/api/favorite/${animalId}`, { method: 'POST' });
+            
+            // 로그인 안 했을 때
             if (response.status === 401) {
-                alert('로그인이 필요한 기능입니다!');
-                window.location.href = '/login';
+                if(confirm('로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?')) {
+                    window.location.href = '/login';
+                }
                 return;
             }
+            
             const data = await response.json();
             
-            // 버튼 스타일 변경
+            // 버튼 스타일 및 아이콘 변경
             const btn = document.getElementById(`btn-fav-${animalId}`);
             if (data.action === 'added') {
                 btn.classList.add('liked');
@@ -162,10 +169,10 @@
             }
         } catch (error) {
             console.error('좋아요 처리 실패:', error);
+            alert('오류가 발생했습니다.');
         }
     }
 
-    //필터/검색/모달 스크립트
     function applyFilters() {
         const keyword = document.getElementById('searchInput').value;
         const region = document.getElementById('regionFilter').value;
@@ -178,29 +185,70 @@
         if(species !== '전체') url += `&species=${encodeURIComponent(species)}`;
         if(gender !== '전체') url += `&gender=${encodeURIComponent(gender)}`;
         url += `&sort=${encodeURIComponent(sort)}`;
-        
         window.location.href = url;
     }
-    function quickFilter(k, v) { window.location.href = `/animals?${k}=${encodeURIComponent(v)}`; }
-    function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
-    
-    async function openDetailModal(id) {
-      const response = await fetch(`/api/animal/${id}`);
-      const data = await response.json();
-      document.getElementById('m_breed').innerText = data.breed;
-      document.getElementById('m_gender').innerText = data.gender;
-      document.getElementById('m_weight').innerText = data.weight;
-      document.getElementById('m_region').innerText = data.region;
-      document.getElementById('m_sdate').innerText = data.register_date;
-      document.getElementById('m_edate').innerText = data.register_end_date;
-      document.getElementById('m_shelter').innerText = data.shelter_name;
-      const imgEl = document.getElementById('m_image');
-      if (data.image_url) { imgEl.src = data.image_url; imgEl.style.display='block'; document.getElementById('m_emoji').style.display='none'; }
-      else { imgEl.style.display='none'; document.getElementById('m_emoji').style.display='block'; }
-      document.getElementById('animalModal').classList.add('active');
+
+    function quickFilter(key, value) {
+        let url = `/animals?${key}=${encodeURIComponent(value)}`;
+        window.location.href = url;
     }
+
+    function handleEnter(e) { if(e.key === 'Enter') applyFilters(); }
+
+    async function openDetailModal(id) {
+      try {
+        const response = await fetch(`/api/animal/${id}`);
+        const data = await response.json();
+        
+        document.getElementById('m_breed').innerText = data.breed || '품종 정보 없음';
+        document.getElementById('m_gender').innerText = data.gender || '-';
+        document.getElementById('m_weight').innerText = data.weight || '-';
+        document.getElementById('m_years').innerText = data.years || '-';
+        document.getElementById('m_region').innerText = data.region || '-';
+        document.getElementById('m_sdate').innerText = data.register_date || '-';
+        document.getElementById('m_edate').innerText = data.register_end_date || '-';
+        document.getElementById('m_shelter').innerText = data.shelter_name || '-';
+
+        currentShelterPhone = data.shelter_phone || '번호 정보 없음';
+
+        const imgEl = document.getElementById('m_image');
+        const emojiEl = document.getElementById('m_emoji');
+        
+        if (data.image_url && data.image_url.trim() !== "") {
+            imgEl.src = data.image_url;
+            imgEl.style.display = 'block';
+            emojiEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            emojiEl.style.display = 'block';
+        }
+        
+        document.getElementById('animalModal').classList.add('active');
+      } catch (error) { 
+        console.error('실패:', error);
+        alert('상세 정보를 불러오는데 실패했습니다.');
+      }
+    }
+    
+    async function contactShelter() {
+        if (currentShelterPhone && currentShelterPhone !== '번호 정보 없음') {
+            try {
+                await navigator.clipboard.writeText(currentShelterPhone);
+                if(confirm(`📋 전화번호 [ ${currentShelterPhone} ]가 복사되었습니다!\n(PC에서는 Ctrl+V로 붙여넣기 가능)\n\n지금 전화를 거시겠습니까?`)) {
+                    window.location.href = `tel:${currentShelterPhone}`;
+                }
+            } catch (err) {
+                if(confirm(`📞 보호소 전화번호는 [ ${currentShelterPhone} ] 입니다.\n\n지금 전화를 거시겠습니까?`)) {
+                    window.location.href = `tel:${currentShelterPhone}`;
+                }
+            }
+        } else {
+            alert("죄송합니다. 이 보호소는 전화번호 정보가 등록되지 않았습니다.");
+        }
+    }
+
     function closeModalButton() { document.getElementById('animalModal').classList.remove('active'); }
-    function closeModal(e) { if (e.target === document.getElementById('animalModal')) closeModalButton(); }
-  </script> 
+    function closeModal(event) { if (event.target === document.getElementById('animalModal')) closeModalButton(); }
+  </script>
 </body>
 </html>

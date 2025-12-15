@@ -36,7 +36,7 @@
               {% if animal['image_url'] %}
                 <img src="{{ animal['image_url'] }}" alt="{{ animal['breed'] }}" style="width:100%; height:100%; object-fit:cover;">
               {% else %}
-                <span style="font-size:30px;">🐶</span>
+                <span style="font-size:30px;">🐕</span>
               {% endif %}
             </div>
             <div class="card-body">
@@ -45,17 +45,129 @@
               <div class="meta">지역: {{ animal['region'] }}</div>
               <div class="meta">보호소: {{ animal['shelter_name'] }}</div>
               <div class="actions">
-                <button class="btn primary" onclick="alert('목록에서 삭제하려면 상세페이지나 목록에서 하트를 눌러주세요.')">상세보기</button>
-                <button class="btn ghost" style="color:red;">♥ 찜함</button>
+                <button class="btn primary" onclick="openDetailModal({{ animal['animal_id'] }})">상세</button>
+                
+                <button class="btn ghost" style="color:red; border-color:red; background:#fff5f5;" 
+                        onclick="removeFavorite({{ animal['animal_id'] }})">
+                  ♥ 찜 취소
+                </button>
               </div>
             </div>
           </article>
           {% endfor %}
         {% else %}
-          <p style="padding:20px;">아직 찜한 동물이 없습니다. 마음에 드는 친구에게 하트를 눌러주세요! ❤️</p>
+          <div style="padding:40px; text-align:center; grid-column: 1 / -1; color:#666;">
+            <p style="font-size:50px; margin-bottom:10px;">🐕</p>
+            <p>아직 찜한 동물이 없습니다.<br>마음에 드는 친구에게 하트를 눌러주세요! ❤️</p>
+            <a href="/animals" class="btn primary" style="margin-top:20px;">친구들 보러가기</a>
+          </div>
         {% endif %}
       </div>
     </section>
   </main>
+
+  <div id="animalModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-window">
+      <button class="modal-close" onclick="closeModalButton()">×</button>
+      <div class="modal-image-area">
+          <img id="m_image" src="" alt="" />
+          <span id="m_emoji" style="font-size:50px; display:none;">🐕</span>
+      </div>
+      <div class="modal-content">
+        <div class="modal-tag" id="m_status">보호중</div>
+        <h2 id="m_breed"></h2>
+        <div class="modal-info-row"><div class="modal-label">특징</div><div class="modal-value"><span id="m_gender"></span> / <span id="m_weight"></span></div></div>
+        <div class="modal-info-row"><div class="modal-label">나이</div><div class="modal-value" id="m_years"></div></div>
+        <div class="modal-info-row"><div class="modal-label">발견장소</div><div class="modal-value" id="m_region"></div></div>
+        <div class="modal-info-row"><div class="modal-label">공고기간</div><div class="modal-value"><span id="m_sdate"></span> ~ <span id="m_edate"></span></div></div>
+        <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+        <div class="modal-info-row"><div class="modal-label">보호소</div><div class="modal-value" id="m_shelter"></div></div>
+        <div class="actions" style="margin-top:20px;">
+            <button class="btn primary full" onclick="contactShelter()">📞 입양 문의하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentShelterPhone = '';
+
+    // 1. 찜 삭제 함수
+    async function removeFavorite(animalId) {
+        if(!confirm('정말 찜 목록에서 삭제하시겠습니까?')) return;
+
+        try {
+            const response = await fetch(`/api/favorite/${animalId}`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.action === 'removed') {
+                alert('삭제되었습니다.');
+                window.location.reload(); 
+            } else {
+                alert('오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('오류:', error);
+            alert('서버 통신 오류');
+        }
+    }
+
+    // 2. 상세 팝업 열기 함수
+    async function openDetailModal(id) {
+      try {
+        const response = await fetch(`/api/animal/${id}`);
+        const data = await response.json();
+        
+        document.getElementById('m_breed').innerText = data.breed || '품종 정보 없음';
+        document.getElementById('m_gender').innerText = data.gender || '-';
+        document.getElementById('m_weight').innerText = data.weight || '-';
+        document.getElementById('m_years').innerText = data.years || '-';
+        document.getElementById('m_region').innerText = data.region || '-';
+        document.getElementById('m_sdate').innerText = data.register_date || '-';
+        document.getElementById('m_edate').innerText = data.register_end_date || '-';
+        document.getElementById('m_shelter').innerText = data.shelter_name || '-';
+
+        currentShelterPhone = data.shelter_phone || '번호 정보 없음';
+
+        const imgEl = document.getElementById('m_image');
+        const emojiEl = document.getElementById('m_emoji');
+        
+        if (data.image_url && data.image_url.trim() !== "") {
+            imgEl.src = data.image_url;
+            imgEl.style.display = 'block';
+            emojiEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            emojiEl.style.display = 'block';
+        }
+        
+        document.getElementById('animalModal').classList.add('active');
+      } catch (error) { 
+        console.error('실패:', error);
+        alert('상세 정보를 불러오는데 실패했습니다.');
+      }
+    }
+    
+    //3. 입양 문의 전화 함수
+    async function contactShelter() {
+        if (currentShelterPhone && currentShelterPhone !== '번호 정보 없음') {
+            try {
+                await navigator.clipboard.writeText(currentShelterPhone);
+                if(confirm(`📋 전화번호 [ ${currentShelterPhone} ]가 복사되었습니다!\n(PC에서는 Ctrl+V로 붙여넣기 가능)\n\n지금 전화를 거시겠습니까?`)) {
+                    window.location.href = `tel:${currentShelterPhone}`;
+                }
+            } catch (err) {
+                if(confirm(`📞 보호소 전화번호는 [ ${currentShelterPhone} ] 입니다.\n\n지금 전화를 거시겠습니까?`)) {
+                    window.location.href = `tel:${currentShelterPhone}`;
+                }
+            }
+        } else {
+            alert("죄송합니다. 이 보호소는 전화번호 정보가 등록되지 않았습니다.");
+        }
+    }
+
+    function closeModalButton() { document.getElementById('animalModal').classList.remove('active'); }
+    function closeModal(event) { if (event.target === document.getElementById('animalModal')) closeModalButton(); }
+  </script>
 </body>
 </html>
