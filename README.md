@@ -58,3 +58,9 @@ PetMatch/
 │       ├── cvstodb.py        # (CSV -> DB 변환)
 │       └── preprocessing.py  # 데이터 전처리 (CSV -> DB 변환)
 └── README.md                 # 프로젝트 설명서
+```
+
+
+## How to run (실행방법)
+
+cd backend -> app.py 실행
